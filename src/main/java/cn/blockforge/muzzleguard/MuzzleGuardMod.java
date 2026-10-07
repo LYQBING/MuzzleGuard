@@ -222,7 +222,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			ItemStack placed = held.copyWithCount(1);
 			invokeApiMethod(inventoryApi, inventory, new String[]{"setStack", "method_5447"},
 					new Class<?>[]{int.class, ItemStack.class}, 0, placed);
-			inventoryApi.getMethod("markUpdate", PlayerEntity.class).invoke(inventory, target);
+			inventoryApi.getMethod("markUpdate").invoke(inventory);
 			if (!player.getAbilities().creativeMode) held.decrement(1);
 			return true;
 		} catch (ReflectiveOperationException exception) {
@@ -270,19 +270,21 @@ public final class MuzzleGuardMod implements ModInitializer {
 				if (bound.isEmpty()) {
 					data.putString(BOUND_KEY_UUID, id);
 					data.putBoolean(LOCKED, true);
-					target.sendMessage(Text.translatable("message.muzzle_guard.key_bound_locked"), false);
 				} else if (bound.equals(id)) {
 					boolean locked = !data.getBoolean(LOCKED).orElse(false);
 					data.putBoolean(LOCKED, locked);
-					target.sendMessage(Text.translatable(locked
-							? "message.muzzle_guard.locked"
-							: "message.muzzle_guard.unlocked"), false);
 				} else {
 					target.sendMessage(Text.translatable("message.muzzle_guard.key_mismatch"), false);
 					return false;
 				}
 				setCustomData(worn, data);
-				inventoryApi.getMethod("markUpdate", PlayerEntity.class).invoke(inventory, target);
+				inventoryApi.getMethod("markUpdate").invoke(inventory);
+				String message = bound.isEmpty()
+						? "message.muzzle_guard.key_bound_locked"
+						: data.getBoolean(LOCKED).orElse(false)
+								? "message.muzzle_guard.locked"
+								: "message.muzzle_guard.unlocked";
+				target.sendMessage(Text.translatable(message), false);
 				return true;
 			}
 			target.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
@@ -321,11 +323,17 @@ public final class MuzzleGuardMod implements ModInitializer {
 			for (Item item : new Item[]{MUZZLE, LOCKED_MUZZLE, COLLAR, LOCKED_COLLAR, LOCKBOX_PHOTO}) {
 				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
-					if (method.getName().equals("canUnequip") && args != null && args.length > 0
-							&& args[0] instanceof ItemStack stack) {
+					if (method.getName().equals("canUnequip")) {
 						if (!lockable) return Boolean.TRUE;
-						NbtCompound data = customData(stack);
-						return !data.getBoolean(LOCKED).orElse(false);
+						if (args != null) {
+							for (Object argument : args) {
+								if (argument instanceof ItemStack stack) {
+									NbtCompound data = customData(stack);
+									return !data.getBoolean(LOCKED).orElse(false);
+								}
+							}
+						}
+						return Boolean.FALSE;
 					}
 					if (method.getName().equals("toString")) return "MuzzleGuardLockableTrinket";
 					if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
