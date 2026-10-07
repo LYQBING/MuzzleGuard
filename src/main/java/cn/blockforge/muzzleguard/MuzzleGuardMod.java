@@ -15,7 +15,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 
@@ -88,7 +88,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
 			for (UUID actorId : actors) {
-				ServerPlayerEntity player = world.getPlayerByUuid(actorId);
+				PlayerEntity player = world.getPlayerByUuid(actorId);
 				if (player != null && player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE)) {
 					return false;
 				}
