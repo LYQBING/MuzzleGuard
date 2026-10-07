@@ -18,7 +18,7 @@
 	"message.muzzle_guard.key_no_target": "对应槽位没有可绑定的挂锁饰品。",
 	"message.muzzle_guard.key_no_trinkets": "无法读取玩家的饰品栏。",
 	"message.muzzle_guard.key_error": "钥匙操作失败，详情见本地游戏日志 logs/latest.log。",
-	"item.muzzle_guard.lockbox_photo": "锁盒照片",
-	"item.muzzle_guard.lockbox_photo.desc": "有了相恋的人，因此拒绝被牛头人。",
+	"item.muzzle_guard.lockbox_photo": "信物项链",
+	"item.muzzle_guard.lockbox_photo.desc": "承载珍贵回忆，拒绝违背彼此的约定。",
 	"itemGroup.muzzle_guard": "口球与项圈"
 }

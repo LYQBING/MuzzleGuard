@@ -3,11 +3,12 @@
 	"category": "equipment",
 	"pattern": [
 		"LLL",
-		"L L",
+		"S S",
 		" L "
 	],
 	"key": {
-		"L": "minecraft:leather"
+		"L": "minecraft:leather",
+		"S": "minecraft:string"
 	},
 	"result": {
 		"id": "muzzle_guard:collar",

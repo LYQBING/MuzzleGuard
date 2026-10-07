@@ -1,6 +1,6 @@
 {
 	"item.muzzle_guard.muzzle": "Gag",
-	"item.muzzle_guard.muzzle.desc": "Wear in the face trinket slot. Blocks mouth-related animations and muffles chat to 'Mmmph'.",
+	"item.muzzle_guard.muzzle.desc": "Wear in the face trinket slot. Blocks mouth-related animations and replaces ordinary chat with muffled syllables.",
 	"item.muzzle_guard.locked_muzzle": "Padlocked Gag",
 	"item.muzzle_guard.locked_muzzle.desc": "Wear in the face trinket slot. Unlocked by default; bind and toggle it with a key.",
 	"item.muzzle_guard.collar": "Collar",
@@ -18,7 +18,7 @@
 	"message.muzzle_guard.key_no_target": "There is no matching padlocked trinket in the corresponding slot.",
 	"message.muzzle_guard.key_no_trinkets": "Could not read the player's trinket inventory.",
 	"message.muzzle_guard.key_error": "The key action failed. See the local game log at logs/latest.log.",
-	"item.muzzle_guard.lockbox_photo": "Locket Photo",
-	"item.muzzle_guard.lockbox_photo.desc": "Already in love, so refusing to be NTR'd.",
+	"item.muzzle_guard.lockbox_photo": "Keepsake Necklace",
+	"item.muzzle_guard.lockbox_photo.desc": "A keepsake of a cherished bond, refusing to break the promise between you.",
 	"itemGroup.muzzle_guard": "Gags and Collars"
 }

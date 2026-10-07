@@ -2,13 +2,13 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		"LIL",
-		"L L",
+		" I ",
+		"ICI",
 		" I "
 	],
 	"key": {
-		"L": "minecraft:leather",
-		"I": "minecraft:iron_nugget"
+		"I": "minecraft:iron_ingot",
+		"C": "muzzle_guard:collar"
 	},
 	"result": {
 		"id": "muzzle_guard:locked_collar",

@@ -2,14 +2,13 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		"LLL",
-		"SIS",
-		"LLL"
+		" L ",
+		"LSL",
+		" L "
 	],
 	"key": {
 		"L": "minecraft:leather",
-		"S": "minecraft:string",
-		"I": "minecraft:iron_nugget"
+		"S": "minecraft:string"
 	},
 	"result": {
 		"id": "muzzle_guard:muzzle",

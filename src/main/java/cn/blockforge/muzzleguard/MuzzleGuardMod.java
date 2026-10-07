@@ -123,14 +123,24 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return true;
 			}
 			String content = message.getContent().getString();
+			int[] codePoints = content.codePoints().toArray();
+			boolean onlyMuffledSpeech = true;
+			for (int codePoint : codePoints) {
+				if (Character.isLetterOrDigit(codePoint) && !isMuffledSyllable(codePoint)) {
+					onlyMuffledSpeech = false;
+					break;
+				}
+			}
+			if (onlyMuffledSpeech) return true;
+
 			StringBuilder muffledContent = new StringBuilder();
-			content.codePoints().forEach(codePoint -> {
-				if (Character.isLetterOrDigit(codePoint)) {
+			for (int codePoint : codePoints) {
+				if (Character.isLetterOrDigit(codePoint) && !isMuffledSyllable(codePoint)) {
 					muffledContent.append(MUFFLED_SYLLABLES[ThreadLocalRandom.current().nextInt(MUFFLED_SYLLABLES.length)]);
 				} else {
 					muffledContent.appendCodePoint(codePoint);
 				}
-			});
+			}
 			Text muffledMessage = sender.getDisplayName().copy().append(Text.literal(": ")).append(Text.literal(muffledContent.toString()));
 			sender.getEntityWorld().getServer().getPlayerManager().broadcast(
 					muffledMessage,
@@ -141,6 +151,13 @@ public final class MuzzleGuardMod implements ModInitializer {
 		});
 		registerTrinketRules();
 		registerAnimationBlocker();
+	}
+
+	private static boolean isMuffledSyllable(int codePoint) {
+		for (String syllable : MUFFLED_SYLLABLES) {
+			if (syllable.codePointAt(0) == codePoint) return true;
+		}
+		return false;
 	}
 
 	private static final class WearableItem extends Item {
