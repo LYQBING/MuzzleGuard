@@ -4,6 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -13,15 +16,13 @@ import java.util.regex.Pattern;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.EquippableComponent;
-import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.equipment.EquipmentAsset;
-import net.minecraft.item.equipment.EquipmentAssetKeys;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -32,13 +33,15 @@ import net.minecraft.text.Text;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
+	private static final String KEY_UUID = "muzzle_guard_key";
+	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
+	private static final String LOCKED = "muzzle_guard_locked";
 	private static final Pattern MUFFLED_SPEECH = Pattern.compile("^[呜啊哇呀嗯哼呃哈唔哦噢诶欸哎咿嘤唉，。！？…~～,.!?、：:；;'\"“”‘’（）()\\[\\]{}\\s—-]+$");
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
-	private static final RegistryKey<EquipmentAsset> MUZZLE_EQUIPMENT =
-			RegistryKey.of(
-					EquipmentAssetKeys.IRON.getRegistryRef(),
-					MUZZLE_ID
-			);
+	private static final Identifier LOCKED_MUZZLE_ID = Identifier.of(MOD_ID, "locked_muzzle");
+	private static final Identifier COLLAR_ID = Identifier.of(MOD_ID, "collar");
+	private static final Identifier LOCKED_COLLAR_ID = Identifier.of(MOD_ID, "locked_collar");
+	private static final Identifier KEY_ID = Identifier.of(MOD_ID, "key");
 	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
 	public static final Item LOCKBOX_PHOTO = Registry.register(
 			Registries.ITEM,
@@ -52,10 +55,22 @@ public final class MuzzleGuardMod implements ModInitializer {
 			MUZZLE_ID,
 			new Item(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, MUZZLE_ID))
-					.maxCount(1)
-					.component(DataComponentTypes.EQUIPPABLE,
-							EquippableComponent.builder(EquipmentSlot.HEAD).model(MUZZLE_EQUIPMENT).build()))
+					.maxCount(1))
 	);
+	public static final Item LOCKED_MUZZLE = registerItem(LOCKED_MUZZLE_ID);
+	public static final Item COLLAR = registerItem(COLLAR_ID);
+	public static final Item LOCKED_COLLAR = registerItem(LOCKED_COLLAR_ID);
+	public static final Item KEY = registerItem(KEY_ID);
+
+	private static Item registerItem(Identifier id) {
+		return Registry.register(
+				Registries.ITEM,
+				id,
+				new Item(new Item.Settings()
+						.registryKey(RegistryKey.of(RegistryKeys.ITEM, id))
+						.maxCount(1))
+		);
+	}
 
 	@Override
 	public void onInitialize() {
@@ -67,6 +82,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 						.icon(() -> new ItemStack(MUZZLE))
 						.entries((context, entries) -> {
 							entries.add(MUZZLE);
+							entries.add(LOCKED_MUZZLE);
+							entries.add(COLLAR);
+							entries.add(LOCKED_COLLAR);
+							entries.add(KEY);
 							entries.add(LOCKBOX_PHOTO);
 						})
 						.build()
@@ -89,11 +108,206 @@ public final class MuzzleGuardMod implements ModInitializer {
 			);
 			return false;
 		});
+		registerTrinketRules();
+		registerPlayerInteractions();
 		registerAnimationBlocker();
 	}
 
 	private static boolean isMuzzleEquipped(PlayerEntity player) {
-		return player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE);
+		return isEquipped(player, MUZZLE) || isEquipped(player, LOCKED_MUZZLE);
+	}
+
+	private static boolean isEquipped(PlayerEntity player, Item item) {
+		try {
+			Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
+			Object component = api.getMethod("getTrinketComponent", LivingEntity.class).invoke(null, player);
+			if (component instanceof Optional<?> optional && optional.isPresent()) {
+				return (boolean) Class.forName("dev.emi.trinkets.api.TrinketComponent")
+						.getMethod("isEquipped", Item.class).invoke(optional.get(), item);
+			}
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to inspect Trinkets equipment: " + exception);
+		}
+		return false;
+	}
+
+	private static void registerPlayerInteractions() {
+		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseEntityCallback", (proxy, method, args) -> {
+			if (args == null || args.length < 4 || !(args[0] instanceof PlayerEntity player)
+					|| !(args[3] instanceof PlayerEntity target)) {
+				return actionResult("PASS");
+			}
+			if (player.getEntityWorld().isClient()) return actionResult("PASS");
+			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
+			if (held.isOf(KEY)) {
+				return bindOrToggle(held, target) ? actionResult("SUCCESS") : actionResult("PASS");
+			}
+			return equipHeldItem(player, target, held) ? actionResult("SUCCESS") : actionResult("PASS");
+		});
+		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseItemCallback", (proxy, method, args) -> {
+			if (args == null || args.length < 3 || !(args[0] instanceof PlayerEntity player)) {
+				return actionResult("PASS");
+			}
+			if (player.getEntityWorld().isClient()) return actionResult("PASS");
+			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
+			if (held.isOf(KEY)) {
+				return bindOrToggle(held, player) ? actionResult("SUCCESS") : actionResult("PASS");
+			}
+			return equipHeldItem(player, player, held) ? actionResult("SUCCESS") : actionResult("PASS");
+		});
+	}
+
+	private static void registerFabricCallback(String callbackName, InvocationHandler handler) {
+		try {
+			ClassLoader loader = MuzzleGuardMod.class.getClassLoader();
+			Class<?> callback = Class.forName(callbackName, true, loader);
+			Object event = callback.getField("EVENT").get(null);
+			Object listener = Proxy.newProxyInstance(callback.getClassLoader(), new Class<?>[]{callback}, handler);
+			Class.forName("net.fabricmc.fabric.api.event.Event", true, loader)
+					.getMethod("register", Object.class).invoke(event, listener);
+		} catch (ReflectiveOperationException | LinkageError exception) {
+			throw new IllegalStateException("Could not register player interaction callback " + callbackName, exception);
+		}
+	}
+
+	private static Object actionResult(String name) {
+		try {
+			return Class.forName("net.minecraft.util.ActionResult").getField(name).get(null);
+		} catch (ReflectiveOperationException exception) {
+			throw new IllegalStateException("Could not resolve action result " + name, exception);
+		}
+	}
+
+	private static boolean equipHeldItem(PlayerEntity player, PlayerEntity target, ItemStack held) {
+		if (held.isEmpty()) return false;
+		String group;
+		String slot;
+		if (held.isOf(MUZZLE) || held.isOf(LOCKED_MUZZLE)) {
+			group = "head";
+			slot = "face";
+		} else if (held.isOf(COLLAR) || held.isOf(LOCKED_COLLAR)) {
+			group = "chest";
+			slot = "necklace";
+		} else {
+			return false;
+		}
+		try {
+			Map<?, ?> groups = getTrinketInventories(target);
+			Object slots = groups == null ? null : groups.get(group);
+			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot) : null;
+			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
+			if (inventory == null || (int) inventoryApi.getMethod("size").invoke(inventory) < 1) return false;
+			ItemStack equipped = (ItemStack) inventoryApi.getMethod("getStack", int.class).invoke(inventory, 0);
+			if (!equipped.isEmpty()) return false;
+			ItemStack placed = held.copyWithCount(1);
+			inventoryApi.getMethod("setStack", int.class, ItemStack.class).invoke(inventory, 0, placed);
+			inventoryApi.getMethod("markUpdate", PlayerEntity.class).invoke(inventory, target);
+			if (!player.getAbilities().creativeMode) held.decrement(1);
+			return true;
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to equip Trinket: " + exception);
+			return false;
+		}
+	}
+
+	private static Map<?, ?> getTrinketInventories(PlayerEntity player) throws ReflectiveOperationException {
+		Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
+		Object component = api.getMethod("getTrinketComponent", LivingEntity.class).invoke(null, player);
+		if (component instanceof Optional<?> optional && optional.isPresent()) {
+			return (Map<?, ?>) optional.get().getClass().getMethod("getInventory").invoke(optional.get());
+		}
+		return null;
+	}
+
+	private static boolean bindOrToggle(ItemStack key, PlayerEntity target) {
+		try {
+			String id = keyId(key);
+			Map<?, ?> groups = getTrinketInventories(target);
+			if (groups == null) return false;
+			for (String[] slot : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
+				Object slots = groups.get(slot[0]);
+				Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot[1]) : null;
+				if (inventory == null) continue;
+				Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
+				int size = (int) inventoryApi.getMethod("size").invoke(inventory);
+				for (int index = 0; index < size; index++) {
+					ItemStack worn = (ItemStack) inventoryApi.getMethod("getStack", int.class).invoke(inventory, index);
+					if (worn.isOf(LOCKED_MUZZLE) || worn.isOf(LOCKED_COLLAR)) {
+						NbtCompound data = customData(worn);
+						String bound = data.getString(BOUND_KEY_UUID).orElse("");
+						if (bound.isEmpty()) {
+							data.putString(BOUND_KEY_UUID, id);
+							data.putBoolean(LOCKED, false);
+							setCustomData(worn, data);
+							target.sendMessage(Text.translatable("message.muzzle_guard.key_bound"), false);
+						} else if (bound.equals(id)) {
+							boolean locked = !data.getBoolean(LOCKED).orElse(false);
+							data.putBoolean(LOCKED, locked);
+							setCustomData(worn, data);
+							target.sendMessage(Text.translatable(locked
+									? "message.muzzle_guard.locked"
+									: "message.muzzle_guard.unlocked"), false);
+						} else {
+							target.sendMessage(Text.translatable("message.muzzle_guard.key_mismatch"), false);
+						continue;
+					}
+					inventoryApi.getMethod("markUpdate", PlayerEntity.class).invoke(inventory, target);
+					return true;
+					}
+				}
+			}
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to bind or toggle Trinket lock: " + exception);
+		}
+		return false;
+	}
+
+	private static String keyId(ItemStack key) {
+		NbtCompound data = customData(key);
+		String id = data.getString(KEY_UUID).orElse("");
+		if (id.isEmpty()) {
+			id = UUID.randomUUID().toString();
+			data.putString(KEY_UUID, id);
+			setCustomData(key, data);
+		}
+		return id;
+	}
+
+	private static NbtCompound customData(ItemStack stack) {
+		NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+		return component == null ? new NbtCompound() : component.copyNbt();
+	}
+
+	private static void setCustomData(ItemStack stack, NbtCompound data) {
+		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(data));
+	}
+
+	private static void registerTrinketRules() {
+		try {
+			Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
+			Class<?> trinket = Class.forName("dev.emi.trinkets.api.Trinket");
+			MethodHandles.Lookup lookup = MethodHandles.lookup();
+			for (Item item : new Item[]{LOCKED_MUZZLE, LOCKED_COLLAR}) {
+				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
+					if (method.getName().equals("canUnequip") && args != null && args.length > 0) {
+						NbtCompound data = customData((ItemStack) args[0]);
+						return !data.getBoolean(LOCKED).orElse(false);
+					}
+					if (method.getName().equals("toString")) return "MuzzleGuardLockableTrinket";
+					if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
+					if (method.getName().equals("equals")) return proxy == args[0];
+					if (method.isDefault()) {
+						return MethodHandles.privateLookupIn(trinket, lookup)
+								.findSpecial(trinket, method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()), trinket)
+								.bindTo(proxy).invokeWithArguments(args == null ? new Object[0] : args);
+					}
+					return method.getReturnType() == boolean.class;
+				});
+				api.getMethod("registerTrinket", Item.class, trinket).invoke(null, item, implementation);
+			}
+		} catch (ReflectiveOperationException | LinkageError exception) {
+			throw new IllegalStateException("Could not register locked Trinkets behavior", exception);
+		}
 	}
 
 	private static boolean isLockboxPhotoEquipped(PlayerEntity player) {

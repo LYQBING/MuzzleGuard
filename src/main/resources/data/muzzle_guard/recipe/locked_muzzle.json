@@ -2,7 +2,7 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		"LLL",
+		"LIL",
 		"SIS",
 		"LLL"
 	],
@@ -12,6 +12,6 @@
 		"I": "minecraft:iron_nugget"
 	},
 	"result": {
-		"id": "muzzleguard:muzzle"
+		"id": "muzzle_guard:locked_muzzle"
 	}
 }

@@ -3,7 +3,7 @@
 	"id": "muzzle_guard",
 	"version": "${version}",
 	"name": "Muzzle Guard (Needs of Nature Addon)",
-	"description": "A wearable gag that prevents mouth-related Needs of Nature animations from starting.",
+	"description": "Face gags, collars, and key-bound padlocks for Trinkets, with Needs of Nature animation protection.",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

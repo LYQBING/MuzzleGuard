@@ -1,6 +1,18 @@
 {
 	"item.muzzle_guard.muzzle": "Gag",
-	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, blocks mouth-related Needs of Nature animations. Chat is replaced with 'Mmmph'.",
+	"item.muzzle_guard.muzzle.desc": "Wear in the face trinket slot. Blocks mouth-related animations and muffles chat to 'Mmmph'.",
+	"item.muzzle_guard.locked_muzzle": "Padlocked Gag",
+	"item.muzzle_guard.locked_muzzle.desc": "Wear in the face trinket slot. Unlocked by default; bind and toggle it with a key.",
+	"item.muzzle_guard.collar": "Collar",
+	"item.muzzle_guard.collar.desc": "Wear in the necklace trinket slot.",
+	"item.muzzle_guard.locked_collar": "Padlocked Collar",
+	"item.muzzle_guard.locked_collar.desc": "Wear in the necklace trinket slot. Unlocked by default; bind and toggle it with a key.",
+	"item.muzzle_guard.key": "Key",
+	"item.muzzle_guard.key.desc": "Use on a worn padlocked trinket to bind it or toggle its lock.",
+	"message.muzzle_guard.key_bound": "Key bound. Use this same key again to lock or unlock the trinket.",
+	"message.muzzle_guard.locked": "The padlocked trinket is now locked.",
+	"message.muzzle_guard.unlocked": "The padlocked trinket is now unlocked.",
+	"message.muzzle_guard.key_mismatch": "This trinket is already bound to another key.",
 	"message.muzzle_guard.muffled": "Your gag muffles your speech into 'Mmmph'.",
 	"item.muzzle_guard.lockbox_photo": "Locket Photo",
 	"item.muzzle_guard.lockbox_photo.desc": "Already in love, so refusing to be NTR'd.",
@@ -9,5 +21,5 @@
 	"message.muzzle_guard.lockbox_blocked.2": "Your promise still stands. Refuse this animation!",
 	"message.muzzle_guard.lockbox_blocked.3": "Your lover's photo reminds you: stay faithful!",
 	"message.muzzle_guard.lockbox_blocked.4": "You are in love. You will not betray them!",
-	"itemGroup.muzzle_guard": "Gags"
+	"itemGroup.muzzle_guard": "Gags and Collars"
 }

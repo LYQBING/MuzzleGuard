@@ -1,6 +1,8 @@
 {
-	"replace": true,
+	"replace": false,
 	"values": [
-		"muzzle_guard:lockbox_photo"
+		"muzzle_guard:lockbox_photo",
+		"muzzle_guard:collar",
+		"muzzle_guard:locked_collar"
 	]
 }

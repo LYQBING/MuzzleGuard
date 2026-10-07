@@ -1,6 +1,18 @@
 {
 	"item.muzzle_guard.muzzle": "口球",
-	"item.muzzle_guard.muzzle.desc": "戴在头部装备栏时，阻止口部相关的自然之需动画。聊天会被转成‘呜呜呜’。",
+	"item.muzzle_guard.muzzle.desc": "可佩戴在面部饰品槽。阻止口部相关动画，聊天会被转成‘呜呜呜’。",
+	"item.muzzle_guard.locked_muzzle": "挂锁口球",
+	"item.muzzle_guard.locked_muzzle.desc": "可佩戴在面部饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
+	"item.muzzle_guard.collar": "项圈",
+	"item.muzzle_guard.collar.desc": "可佩戴在项链饰品槽。",
+	"item.muzzle_guard.locked_collar": "挂锁项圈",
+	"item.muzzle_guard.locked_collar.desc": "可佩戴在项链饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
+	"item.muzzle_guard.key": "钥匙",
+	"item.muzzle_guard.key.desc": "右键佩戴挂锁饰品以绑定或切换锁定状态。",
+	"message.muzzle_guard.key_bound": "钥匙已绑定。再次使用同一把钥匙可锁定或解锁。",
+	"message.muzzle_guard.locked": "挂锁饰品已锁定。",
+	"message.muzzle_guard.unlocked": "挂锁饰品已解锁。",
+	"message.muzzle_guard.key_mismatch": "这件饰品已绑定另一把钥匙。",
 	"message.muzzle_guard.muffled": "你戴着口球，只能发出‘呜呜呜’。",
 	"item.muzzle_guard.lockbox_photo": "锁盒照片",
 	"item.muzzle_guard.lockbox_photo.desc": "有了相恋的人，因此拒绝被牛头人。",
@@ -9,5 +21,5 @@
 	"message.muzzle_guard.lockbox_blocked.2": "你的承诺仍在，拒绝这场动画！",
 	"message.muzzle_guard.lockbox_blocked.3": "爱人的照片提醒你：忠于彼此！",
 	"message.muzzle_guard.lockbox_blocked.4": "你已经有了相恋的人，绝不背叛！",
-	"itemGroup.muzzle_guard": "口球"
+	"itemGroup.muzzle_guard": "口球与项圈"
 }
