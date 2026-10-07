@@ -157,18 +157,24 @@ public final class MuzzleGuardMod implements ModInitializer {
 		try {
 			Class<?> contextClass = context.getClass();
 			ServerWorld world = (ServerWorld) contextClass.getMethod("world").invoke(context);
+			PlayerEntity requester = (PlayerEntity) contextClass.getMethod("requester").invoke(context);
 			List<PlayerEntity> protectedPlayers = new java.util.ArrayList<>();
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
+			boolean onlyPlayers = actors.size() >= 2;
 			for (UUID actorId : actors) {
 				PlayerEntity player = world.getPlayerByUuid(actorId);
-				if (player != null && isLockboxPhotoEquipped(player)) {
+				if (player == null) {
+					onlyPlayers = false;
+				} else if (isLockboxPhotoEquipped(player)) {
 					protectedPlayers.add(player);
 				}
 			}
-			PlayerEntity requester = (PlayerEntity) contextClass.getMethod("requester").invoke(context);
 			if (requester != null && isLockboxPhotoEquipped(requester) && !protectedPlayers.contains(requester)) {
 				protectedPlayers.add(requester);
+			}
+			if (protectedPlayers.isEmpty() || onlyPlayers) {
+				return true;
 			}
 			if (!protectedPlayers.isEmpty()) {
 				int messageIndex = ThreadLocalRandom.current().nextInt(5);
