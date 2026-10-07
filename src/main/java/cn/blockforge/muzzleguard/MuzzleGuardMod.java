@@ -171,6 +171,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static Object actionResult(Method callbackMethod, String name) {
 		Class<?> resultType = callbackMethod.getReturnType();
 		try {
+			return resultType.getField(name).get(null);
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Could not resolve callback result " + resultType.getName() + "." + name, exception);
 		}
