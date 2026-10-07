@@ -324,16 +324,18 @@ public final class MuzzleGuardMod implements ModInitializer {
 				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
 					if (method.getName().equals("canUnequip")) {
-						if (!lockable) return Boolean.TRUE;
-						if (args != null) {
-							for (Object argument : args) {
-								if (argument instanceof ItemStack stack) {
-									NbtCompound data = customData(stack);
-									return !data.getBoolean(LOCKED).orElse(false);
-								}
-							}
+						ItemStack stack = args != null && args.length > 0 && args[0] instanceof ItemStack itemStack
+								? itemStack
+								: ItemStack.EMPTY;
+						boolean locked = lockable && !stack.isEmpty()
+								&& customData(stack).getBoolean(LOCKED).orElse(false);
+						boolean canUnequip = !lockable || (!stack.isEmpty() && !locked);
+						if (item == COLLAR || item == LOCKED_COLLAR) {
+							System.out.println("[Muzzle Guard] Necklace canUnequip: item="
+									+ Registries.ITEM.getId(stack.getItem()) + ", locked=" + locked
+									+ ", allowed=" + canUnequip);
 						}
-						return Boolean.FALSE;
+						return canUnequip;
 					}
 					if (method.getName().equals("toString")) return "MuzzleGuardLockableTrinket";
 					if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
