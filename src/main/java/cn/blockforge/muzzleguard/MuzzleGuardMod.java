@@ -10,26 +10,26 @@ import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
 	public static final Item MUZZLE = Registry.register(
-			Registries.ITEM,
-			Identifier.of(MOD_ID, "muzzle"),
-			new Item(new Item.Settings().maxCount(1).equippable(EquipmentSlot.HEAD))
+			BuiltInRegistries.ITEM,
+			ResourceLocation.fromNamespaceAndPath(MOD_ID, "muzzle"),
+			new Item(new Item.Properties().stacksTo(1).equippable(EquipmentSlot.HEAD))
 	);
 
 	@Override
 	public void onInitialize() {
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.COMBAT).register(entries -> entries.add(MUZZLE));
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> entries.accept(MUZZLE));
 		registerAnimationBlocker();
 	}
 
@@ -84,12 +84,12 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return true;
 			}
 
-			ServerWorld world = (ServerWorld) contextClass.getMethod("world").invoke(context);
+			ServerLevel world = (ServerLevel) contextClass.getMethod("world").invoke(context);
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
 			for (UUID actorId : actors) {
-				ServerPlayerEntity player = world.getPlayerByUuid(actorId);
-				if (player != null && player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE)) {
+				ServerPlayer player = world.getServer().getPlayerList().getPlayer(actorId);
+				if (player != null && player.getItemBySlot(EquipmentSlot.HEAD).is(MUZZLE)) {
 					return false;
 				}
 			}
