@@ -7,9 +7,9 @@
 		"LLL"
 	],
 	"key": {
-		"L": { "item": "minecraft:leather" },
-		"S": { "item": "minecraft:string" },
-		"I": { "item": "minecraft:iron_nugget" }
+		"L": "minecraft:leather",
+		"S": "minecraft:string",
+		"I": "minecraft:iron_nugget"
 	},
 	"result": {
 		"id": "muzzle_guard:muzzle",

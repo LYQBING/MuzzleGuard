@@ -18,6 +18,9 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.world.World;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -51,22 +54,28 @@ public final class MuzzleGuardMod implements ModInitializer {
 	public static final Item MUZZLE = Registry.register(
 			Registries.ITEM,
 			MUZZLE_ID,
-			new Item(new Item.Settings()
+			new WearableItem(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, MUZZLE_ID))
+					.maxCount(1), "head", "face")
+	);
+	public static final Item LOCKED_MUZZLE = registerWearable(LOCKED_MUZZLE_ID, "head", "face");
+	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
+	public static final Item LOCKED_COLLAR = registerWearable(LOCKED_COLLAR_ID, "chest", "necklace");
+	public static final Item KEY = Registry.register(
+			Registries.ITEM,
+			KEY_ID,
+			new KeyItem(new Item.Settings()
+					.registryKey(RegistryKey.of(RegistryKeys.ITEM, KEY_ID))
 					.maxCount(1))
 	);
-	public static final Item LOCKED_MUZZLE = registerItem(LOCKED_MUZZLE_ID);
-	public static final Item COLLAR = registerItem(COLLAR_ID);
-	public static final Item LOCKED_COLLAR = registerItem(LOCKED_COLLAR_ID);
-	public static final Item KEY = registerItem(KEY_ID);
 
-	private static Item registerItem(Identifier id) {
+	private static Item registerWearable(Identifier id, String group, String slot) {
 		return Registry.register(
 				Registries.ITEM,
 				id,
-				new Item(new Item.Settings()
+				new WearableItem(new Item.Settings()
 						.registryKey(RegistryKey.of(RegistryKeys.ITEM, id))
-						.maxCount(1))
+						.maxCount(1), group, slot)
 		);
 	}
 
@@ -107,8 +116,52 @@ public final class MuzzleGuardMod implements ModInitializer {
 			return false;
 		});
 		registerTrinketRules();
-		registerPlayerInteractions();
 		registerAnimationBlocker();
+	}
+
+	private static final class WearableItem extends Item {
+		private final String group;
+		private final String slot;
+
+		private WearableItem(Settings settings, String group, String slot) {
+			super(settings);
+			this.group = group;
+			this.slot = slot;
+		}
+
+		@Override
+		public ActionResult use(World world, PlayerEntity user, Hand hand) {
+			ItemStack stack = user.getStackInHand(hand);
+			if (!world.isClient()) equipHeldItem(user, user, stack, group, slot);
+			return ActionResult.SUCCESS;
+		}
+
+		@Override
+		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
+				equipHeldItem(user, target, stack, group, slot);
+			}
+			return ActionResult.SUCCESS;
+		}
+	}
+
+	private static final class KeyItem extends Item {
+		private KeyItem(Settings settings) {
+			super(settings);
+		}
+
+		@Override
+		public ActionResult use(World world, PlayerEntity user, Hand hand) {
+			ItemStack stack = user.getStackInHand(hand);
+			if (!world.isClient()) bindOrToggle(stack, user);
+			return ActionResult.SUCCESS;
+		}
+
+		@Override
+		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) bindOrToggle(stack, target);
+			return ActionResult.SUCCESS;
+		}
 	}
 
 	private static boolean isMuzzleEquipped(PlayerEntity player) {
@@ -129,67 +182,8 @@ public final class MuzzleGuardMod implements ModInitializer {
 		return false;
 	}
 
-	private static void registerPlayerInteractions() {
-		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseEntityCallback", (proxy, method, args) -> {
-			if (args == null || args.length < 4 || !(args[0] instanceof PlayerEntity player)
-					|| !(args[3] instanceof PlayerEntity target)) {
-				return actionResult(method, "PASS");
-			}
-			if (player.getEntityWorld().isClient()) return actionResult(method, "PASS");
-			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
-			if (held.isOf(KEY)) {
-				return bindOrToggle(held, target) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
-			}
-			return equipHeldItem(player, target, held) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
-		});
-		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseItemCallback", (proxy, method, args) -> {
-			if (args == null || args.length < 3 || !(args[0] instanceof PlayerEntity player)) {
-				return actionResult(method, "PASS");
-			}
-			if (player.getEntityWorld().isClient()) return actionResult(method, "PASS");
-			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
-			if (held.isOf(KEY)) {
-				return bindOrToggle(held, player) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
-			}
-			return equipHeldItem(player, player, held) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
-		});
-	}
-
-	private static void registerFabricCallback(String callbackName, InvocationHandler handler) {
-		try {
-			ClassLoader loader = MuzzleGuardMod.class.getClassLoader();
-			Class<?> callback = Class.forName(callbackName, true, loader);
-			Object event = callback.getField("EVENT").get(null);
-			Object listener = Proxy.newProxyInstance(callback.getClassLoader(), new Class<?>[]{callback}, handler);
-			Class.forName("net.fabricmc.fabric.api.event.Event", true, loader)
-					.getMethod("register", Object.class).invoke(event, listener);
-		} catch (ReflectiveOperationException | LinkageError exception) {
-			throw new IllegalStateException("Could not register player interaction callback " + callbackName, exception);
-		}
-	}
-
-	private static Object actionResult(Method callbackMethod, String name) {
-		Class<?> resultType = callbackMethod.getReturnType();
-		try {
-			return resultType.getField(name).get(null);
-		} catch (ReflectiveOperationException exception) {
-			throw new IllegalStateException("Could not resolve callback result " + resultType.getName() + "." + name, exception);
-		}
-	}
-
-	private static boolean equipHeldItem(PlayerEntity player, PlayerEntity target, ItemStack held) {
+	private static boolean equipHeldItem(PlayerEntity player, PlayerEntity target, ItemStack held, String group, String slot) {
 		if (held.isEmpty()) return false;
-		String group;
-		String slot;
-		if (held.isOf(MUZZLE) || held.isOf(LOCKED_MUZZLE)) {
-			group = "head";
-			slot = "face";
-		} else if (held.isOf(COLLAR) || held.isOf(LOCKED_COLLAR)) {
-			group = "chest";
-			slot = "necklace";
-		} else {
-			return false;
-		}
 		try {
 			Map<?, ?> groups = getTrinketInventories(target);
 			Object slots = groups == null ? null : groups.get(group);
@@ -290,7 +284,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
 					if (method.getName().equals("canUnequip") && args != null && args.length > 0) {
-						if (!lockable) return true;
+						if (!lockable) return Boolean.TRUE;
 						NbtCompound data = customData((ItemStack) args[0]);
 						return !data.getBoolean(LOCKED).orElse(false);
 					}

@@ -7,9 +7,9 @@
 		" I "
 	],
 	"key": {
-		"C": { "item": "minecraft:chain" },
-		"I": { "item": "minecraft:iron_ingot" },
-		"D": { "item": "minecraft:item_frame" }
+		"C": "minecraft:chain",
+		"I": "minecraft:iron_ingot",
+		"D": "minecraft:item_frame"
 	},
 	"result": {
 		"id": "muzzle_guard:lockbox_photo",

@@ -7,7 +7,7 @@
 		" L "
 	],
 	"key": {
-		"L": { "item": "minecraft:leather" }
+		"L": "minecraft:leather"
 	},
 	"result": {
 		"id": "muzzle_guard:collar",
