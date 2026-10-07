@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +46,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final Identifier COLLAR_ID = Identifier.of(MOD_ID, "collar");
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.of(MOD_ID, "locked_collar");
 	private static final Identifier KEY_ID = Identifier.of(MOD_ID, "key");
-	private static final Identifier COLLAR_KEY_ID = Identifier.of(MOD_ID, "collar_key");
 	private static final Identifier MASTER_KEY_ID = Identifier.of(MOD_ID, "master_key");
 	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
 	public static final Item LOCKBOX_PHOTO = Registry.register(
@@ -70,14 +70,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			KEY_ID,
 			new KeyItem(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, KEY_ID))
-					.maxCount(1), false)
-	);
-	public static final Item COLLAR_KEY = Registry.register(
-			Registries.ITEM,
-			COLLAR_KEY_ID,
-			new KeyItem(new Item.Settings()
-					.registryKey(RegistryKey.of(RegistryKeys.ITEM, COLLAR_KEY_ID))
-					.maxCount(1), true)
+					.maxCount(1))
 	);
 	public static final Item MASTER_KEY = Registry.register(
 			Registries.ITEM,
@@ -124,7 +117,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 							entries.add(COLLAR);
 							entries.add(LOCKED_COLLAR);
 							entries.add(KEY);
-							entries.add(COLLAR_KEY);
 							entries.add(MASTER_KEY);
 							entries.add(LOCKBOX_PHOTO);
 						})
@@ -269,11 +261,8 @@ public final class MuzzleGuardMod implements ModInitializer {
 	}
 
 	private static final class KeyItem extends Item {
-		private final boolean collarKey;
-
-		private KeyItem(Settings settings, boolean collarKey) {
+		private KeyItem(Settings settings) {
 			super(settings);
-			this.collarKey = collarKey;
 		}
 
 		@Override
@@ -286,14 +275,14 @@ public final class MuzzleGuardMod implements ModInitializer {
 		@Override
 		public ActionResult use(World world, PlayerEntity user, Hand hand) {
 			ItemStack stack = user.getStackInHand(hand);
-			if (!world.isClient()) bindOrToggle(stack, user, user, collarKey);
+			if (!world.isClient()) bindOrToggle(stack, user, user);
 			return ActionResult.SUCCESS;
 		}
 
 		@Override
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
 			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
-				bindOrToggle(user.getStackInHand(hand), user, target, collarKey);
+				bindOrToggle(user.getStackInHand(hand), user, target);
 			}
 			return ActionResult.SUCCESS;
 		}
@@ -374,61 +363,82 @@ public final class MuzzleGuardMod implements ModInitializer {
 		return null;
 	}
 
-	private static boolean bindOrToggle(ItemStack key, PlayerEntity actor, PlayerEntity target, boolean collarKey) {
+	private static boolean bindOrToggle(ItemStack key, PlayerEntity actor, PlayerEntity target) {
 		try {
 			Map<?, ?> groups = getTrinketInventories(target);
 			if (groups == null) {
 				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_trinkets"), false);
 				return false;
 			}
-			String group = collarKey ? "chest" : "head";
-			String slot = collarKey ? "necklace" : "face";
-			Object slots = groups.get(group);
-			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot) : null;
-			if (inventory == null) {
-				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
+			String id = keyId(key);
+			List<LockCandidate> candidates = new ArrayList<>();
+			for (String[] slotPath : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
+				Object slots = groups.get(slotPath[0]);
+				Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slotPath[1]) : null;
+				if (inventory == null) continue;
+				int size = ((Number) invokeApiMethod(inventoryApi, inventory,
+						new String[]{"size", "method_5439"}, new Class<?>[0])).intValue();
+				for (int index = 0; index < size; index++) {
+					ItemStack worn = (ItemStack) invokeApiMethod(inventoryApi, inventory,
+							new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, index);
+					if (isLockableTrinket(worn)) candidates.add(new LockCandidate(worn, inventory));
+				}
+			}
+			LockCandidate selected = candidates.stream()
+					.filter(candidate -> candidate.boundKey.equals(id))
+					.findFirst()
+					.orElseGet(() -> candidates.stream().filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null));
+			if (selected == null) {
+				if (candidates.isEmpty()) {
+					actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+				} else {
+					actor.sendMessage(Text.translatable("message.muzzle_guard.key_bound_elsewhere", candidates.get(0).stack.getName()), false);
+				}
 				return false;
 			}
-			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
-			int size = ((Number) invokeApiMethod(inventoryApi, inventory,
-					new String[]{"size", "method_5439"}, new Class<?>[0])).intValue();
-			for (int index = 0; index < size; index++) {
-				ItemStack worn = (ItemStack) invokeApiMethod(inventoryApi, inventory,
-						new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, index);
-				boolean matching = collarKey ? worn.isOf(LOCKED_COLLAR) : worn.isOf(LOCKED_MUZZLE);
-				if (!matching) continue;
-				String id = keyId(key);
-				NbtCompound data = customData(worn);
-				String bound = data.getString(BOUND_KEY_UUID).orElse("");
-				if (bound.isEmpty()) {
-					data.putString(BOUND_KEY_UUID, id);
-					data.putBoolean(LOCKED, true);
-				} else if (bound.equals(id)) {
-					boolean locked = !data.getBoolean(LOCKED).orElse(false);
-					data.putBoolean(LOCKED, locked);
-				} else {
-					actor.sendMessage(Text.translatable("message.muzzle_guard.key_mismatch"), false);
-					return false;
-				}
-				setCustomData(worn, data);
-				inventoryApi.getMethod("markUpdate").invoke(inventory);
-				String message = bound.isEmpty()
-						? "message.muzzle_guard.key_bound_locked"
-						: data.getBoolean(LOCKED).orElse(false)
-								? "message.muzzle_guard.locked"
-								: "message.muzzle_guard.unlocked";
-				Text result = Text.translatable(message);
-				actor.sendMessage(result, false);
-				if (!actor.getUuid().equals(target.getUuid())) target.sendMessage(result, false);
-				return true;
+			boolean newlyBound = selected.boundKey.isEmpty();
+			if (newlyBound) {
+				selected.data.putString(BOUND_KEY_UUID, id);
+				selected.data.putBoolean(LOCKED, true);
+			} else {
+				selected.data.putBoolean(LOCKED, !selected.data.getBoolean(LOCKED).orElse(false));
 			}
-			actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+			setCustomData(selected.stack, selected.data);
+			inventoryApi.getMethod("markUpdate").invoke(selected.inventory);
+			String message = newlyBound
+					? "message.muzzle_guard.key_bound_to"
+					: selected.data.getBoolean(LOCKED).orElse(false)
+							? "message.muzzle_guard.locked_item"
+							: "message.muzzle_guard.unlocked_item";
+			Text result = Text.translatable(message, selected.stack.getName());
+			actor.sendMessage(result, false);
+			if (!actor.getUuid().equals(target.getUuid())) target.sendMessage(result, false);
+			return true;
 		} catch (ReflectiveOperationException exception) {
 			System.err.println("[Muzzle Guard] Failed to bind or toggle Trinket lock:");
 			exception.printStackTrace(System.err);
 			actor.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
 		}
 		return false;
+	}
+
+	private static boolean isLockableTrinket(ItemStack stack) {
+		return !stack.isEmpty() && (stack.isOf(LOCKED_MUZZLE) || stack.isOf(LOCKED_COLLAR));
+	}
+
+	private static final class LockCandidate {
+		private final ItemStack stack;
+		private final Object inventory;
+		private final NbtCompound data;
+		private final String boundKey;
+
+		private LockCandidate(ItemStack stack, Object inventory) {
+			this.stack = stack;
+			this.inventory = inventory;
+			this.data = customData(stack);
+			this.boundKey = data.getString(BOUND_KEY_UUID).orElse("");
+		}
 	}
 
 	private static String keyId(ItemStack key) {
