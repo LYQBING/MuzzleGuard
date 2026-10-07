@@ -133,25 +133,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return true;
 			}
 
-	private static final class MasterKeyItem extends Item {
-		private MasterKeyItem(Settings settings) {
-			super(settings);
-		}
-
-		@Override
-		public ActionResult use(World world, PlayerEntity user, Hand hand) {
-			if (!world.isClient()) removeLockBinding(user, user);
-			return ActionResult.SUCCESS;
-		}
-
-		@Override
-		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
-				removeLockBinding(user, target);
-			}
-			return ActionResult.SUCCESS;
-		}
-	}
 			String content = message.getContent().getString();
 			int[] codePoints = content.codePoints().toArray();
 			boolean onlyMuffledSpeech = true;
@@ -296,6 +277,26 @@ public final class MuzzleGuardMod implements ModInitializer {
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
 			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
 				bindOrToggle(user.getStackInHand(hand), user, target, collarKey);
+			}
+			return ActionResult.SUCCESS;
+		}
+	}
+
+	private static final class MasterKeyItem extends Item {
+		private MasterKeyItem(Settings settings) {
+			super(settings);
+		}
+
+		@Override
+		public ActionResult use(World world, PlayerEntity user, Hand hand) {
+			if (!world.isClient()) removeLockBinding(user, user);
+			return ActionResult.SUCCESS;
+		}
+
+		@Override
+		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
+				removeLockBinding(user, target);
 			}
 			return ActionResult.SUCCESS;
 		}
