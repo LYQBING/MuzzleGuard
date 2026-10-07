@@ -9,34 +9,59 @@ import java.util.Locale;
 import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.EquippableComponent;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroups;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.equipment.EquipmentAsset;
+import net.minecraft.item.equipment.EquipmentAssetKeys;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.text.Text;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
+	private static final RegistryKey<EquipmentAsset> MUZZLE_EQUIPMENT =
+			RegistryKey.of(
+					EquipmentAssetKeys.IRON.getRegistryRef(),
+					MUZZLE_ID
+			);
 	public static final Item MUZZLE = Registry.register(
 			Registries.ITEM,
 			MUZZLE_ID,
 			new Item(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, MUZZLE_ID))
 					.maxCount(1)
-					.equippable(EquipmentSlot.HEAD))
+					.component(DataComponentTypes.EQUIPPABLE,
+							EquippableComponent.builder(EquipmentSlot.HEAD).model(MUZZLE_EQUIPMENT).build()))
 	);
 
 	@Override
 	public void onInitialize() {
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.COMBAT).register(entries -> entries.add(MUZZLE));
+		Registry.register(
+				Registries.ITEM_GROUP,
+				Identifier.of(MOD_ID, "main"),
+				FabricItemGroup.builder()
+						.displayName(Text.translatable("itemGroup.muzzle_guard"))
+						.icon(() -> new ItemStack(MUZZLE))
+						.entries((context, entries) -> entries.add(MUZZLE))
+						.build()
+		);
+		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> !isMuzzleEquipped(sender));
 		registerAnimationBlocker();
+	}
+
+	private static boolean isMuzzleEquipped(PlayerEntity player) {
+		return player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE);
 	}
 
 	private static void registerAnimationBlocker() {
@@ -96,7 +121,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
 			for (UUID actorId : actors) {
 				PlayerEntity player = world.getPlayerByUuid(actorId);
-				if (player != null && player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE)) {
+				if (player != null && isMuzzleEquipped(player)) {
 					return false;
 				}
 			}

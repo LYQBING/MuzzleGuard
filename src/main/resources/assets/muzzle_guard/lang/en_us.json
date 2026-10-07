@@ -1,5 +1,5 @@
 {
 	"item.muzzle_guard.muzzle": "Gag",
-	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, prevents mouth-related Needs of Nature animations from starting.",
-	"itemGroup.muzzle_guard": "Muzzle Guard"
+	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, blocks mouth-related Needs of Nature animations and chat messages.",
+	"itemGroup.muzzle_guard": "Gags"
 }
