@@ -2,5 +2,7 @@
 	"item.muzzle_guard.muzzle": "Gag",
 	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, blocks mouth-related Needs of Nature animations. Chat is replaced with 'Mmmph'.",
 	"message.muzzle_guard.muffled": "Your gag muffles your speech into 'Mmmph'.",
+	"item.muzzle_guard.lockbox_photo": "Locket Photo",
+	"item.muzzle_guard.lockbox_photo.desc": "Already in love, so refusing to be NTR'd.",
 	"itemGroup.muzzle_guard": "Gags"
 }

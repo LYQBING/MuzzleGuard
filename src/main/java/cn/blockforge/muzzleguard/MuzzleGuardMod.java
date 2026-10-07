@@ -75,7 +75,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 			sender.sendMessage(Text.translatable("message.muzzle_guard.muffled"));
 			Text muffledMessage = sender.getDisplayName().copy().append(Text.literal(": 呜呜呜"));
-			sender.getServer().getPlayerManager().broadcast(muffledMessage, recipient -> muffledMessage, false);
+			sender.getEntityWorld().getServer().getPlayerManager().broadcast(
+					muffledMessage,
+					recipient -> muffledMessage,
+					false
+			);
 			return false;
 		});
 		registerAnimationBlocker();
