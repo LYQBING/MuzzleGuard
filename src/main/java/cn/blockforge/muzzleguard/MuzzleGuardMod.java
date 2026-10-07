@@ -17,6 +17,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -43,6 +44,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.of(MOD_ID, "locked_collar");
 	private static final Identifier KEY_ID = Identifier.of(MOD_ID, "key");
 	private static final Identifier COLLAR_KEY_ID = Identifier.of(MOD_ID, "collar_key");
+	private static final Identifier MASTER_KEY_ID = Identifier.of(MOD_ID, "master_key");
 	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
 	public static final Item LOCKBOX_PHOTO = Registry.register(
 			Registries.ITEM,
@@ -74,6 +76,13 @@ public final class MuzzleGuardMod implements ModInitializer {
 			new KeyItem(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, COLLAR_KEY_ID))
 					.maxCount(1), true)
+	);
+	public static final Item MASTER_KEY = Registry.register(
+			Registries.ITEM,
+			MASTER_KEY_ID,
+			new MasterKeyItem(new Item.Settings()
+					.registryKey(RegistryKey.of(RegistryKeys.ITEM, MASTER_KEY_ID))
+					.maxCount(1))
 	);
 
 	private static Item registerWearable(Identifier id, String group, String slot) {
@@ -114,6 +123,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 							entries.add(LOCKED_COLLAR);
 							entries.add(KEY);
 							entries.add(COLLAR_KEY);
+							entries.add(MASTER_KEY);
 							entries.add(LOCKBOX_PHOTO);
 						})
 						.build()
@@ -122,6 +132,26 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (!isMuzzleEquipped(sender)) {
 				return true;
 			}
+
+	private static final class MasterKeyItem extends Item {
+		private MasterKeyItem(Settings settings) {
+			super(settings);
+		}
+
+		@Override
+		public ActionResult use(World world, PlayerEntity user, Hand hand) {
+			if (!world.isClient()) removeLockBinding(user, user);
+			return ActionResult.SUCCESS;
+		}
+
+		@Override
+		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
+				removeLockBinding(user, target);
+			}
+			return ActionResult.SUCCESS;
+		}
+	}
 			String content = message.getContent().getString();
 			int[] codePoints = content.codePoints().toArray();
 			boolean onlyMuffledSpeech = true;
@@ -160,6 +190,43 @@ public final class MuzzleGuardMod implements ModInitializer {
 		return false;
 	}
 
+	private static void removeLockBinding(PlayerEntity actor, PlayerEntity target) {
+		try {
+			Map<?, ?> groups = getTrinketInventories(target);
+			if (groups == null) {
+				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_trinkets"), false);
+				return;
+			}
+			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
+			for (String[] slotPath : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
+				Object slots = groups.get(slotPath[0]);
+				Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slotPath[1]) : null;
+				if (inventory == null) continue;
+				int size = ((Number) invokeApiMethod(inventoryApi, inventory,
+						new String[]{"size", "method_5439"}, new Class<?>[0])).intValue();
+				for (int index = 0; index < size; index++) {
+					ItemStack worn = (ItemStack) invokeApiMethod(inventoryApi, inventory,
+							new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, index);
+					if (worn.isEmpty() || !(worn.isOf(LOCKED_COLLAR) || worn.isOf(LOCKED_MUZZLE))) continue;
+					NbtCompound data = customData(worn);
+					data.remove(BOUND_KEY_UUID);
+					data.remove(LOCKED);
+					setCustomData(worn, data);
+					inventoryApi.getMethod("markUpdate").invoke(inventory);
+					Text result = Text.translatable("message.muzzle_guard.master_key_unlocked");
+					actor.sendMessage(result, false);
+					if (!actor.getUuid().equals(target.getUuid())) target.sendMessage(result, false);
+					return;
+				}
+			}
+			actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to remove Trinket lock binding:");
+			exception.printStackTrace(System.err);
+			actor.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
+		}
+	}
+
 	private static final class WearableItem extends Item {
 		private final String group;
 		private final String slot;
@@ -168,6 +235,23 @@ public final class MuzzleGuardMod implements ModInitializer {
 			super(settings);
 			this.group = group;
 			this.slot = slot;
+		}
+
+		@Override
+		public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+			super.appendTooltip(stack, context, tooltip, type);
+			if (this != LOCKED_MUZZLE && this != LOCKED_COLLAR) return;
+
+			NbtCompound data = customData(stack);
+			String boundKey = data.getString(BOUND_KEY_UUID).orElse("");
+			tooltip.add(Text.translatable(boundKey.isEmpty()
+					? "tooltip.muzzle_guard.unbound"
+					: "tooltip.muzzle_guard.bound_key", shortId(boundKey)));
+			if (!boundKey.isEmpty()) {
+				tooltip.add(Text.translatable(data.getBoolean(LOCKED).orElse(false)
+						? "tooltip.muzzle_guard.locked"
+						: "tooltip.muzzle_guard.unlocked"));
+			}
 		}
 
 		@Override
@@ -195,6 +279,13 @@ public final class MuzzleGuardMod implements ModInitializer {
 		}
 
 		@Override
+		public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+			super.appendTooltip(stack, context, tooltip, type);
+			String id = customData(stack).getString(KEY_UUID).orElse("");
+			if (!id.isEmpty()) tooltip.add(Text.translatable("tooltip.muzzle_guard.key_id", shortId(id)));
+		}
+
+		@Override
 		public ActionResult use(World world, PlayerEntity user, Hand hand) {
 			ItemStack stack = user.getStackInHand(hand);
 			if (!world.isClient()) bindOrToggle(stack, user, user, collarKey);
@@ -203,7 +294,9 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 		@Override
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) bindOrToggle(stack, user, target, collarKey);
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
+				bindOrToggle(user.getStackInHand(hand), user, target, collarKey);
+			}
 			return ActionResult.SUCCESS;
 		}
 	}
@@ -326,6 +419,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 			setCustomData(key, data);
 		}
 		return id;
+	}
+
+	private static String shortId(String id) {
+		return id.length() <= 8 ? id : id.substring(0, 8);
 	}
 
 	private static NbtCompound customData(ItemStack stack) {
