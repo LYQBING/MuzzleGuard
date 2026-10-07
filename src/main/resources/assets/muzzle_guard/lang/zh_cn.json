@@ -4,5 +4,10 @@
 	"message.muzzle_guard.muffled": "你戴着口球，只能发出‘呜呜呜’。",
 	"item.muzzle_guard.lockbox_photo": "锁盒照片",
 	"item.muzzle_guard.lockbox_photo.desc": "有了相恋的人，因此拒绝被牛头人。",
+	"message.muzzle_guard.lockbox_blocked.0": "你的爱人令你充满力量，怎能背叛！",
+	"message.muzzle_guard.lockbox_blocked.1": "想想你心中的那个人，不能做出这种事！",
+	"message.muzzle_guard.lockbox_blocked.2": "你的承诺仍在，拒绝这场动画！",
+	"message.muzzle_guard.lockbox_blocked.3": "爱人的照片提醒你：忠于彼此！",
+	"message.muzzle_guard.lockbox_blocked.4": "你已经有了相恋的人，绝不背叛！",
 	"itemGroup.muzzle_guard": "口球"
 }

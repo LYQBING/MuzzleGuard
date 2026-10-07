@@ -6,7 +6,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
@@ -30,6 +32,7 @@ import net.minecraft.text.Text;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
+	private static final Pattern MUFFLED_SPEECH = Pattern.compile("^[呜啊哇呀嗯哼呃哈唔哦噢诶欸哎咿嘤唉，。！？…~～,.!?、：:；;'\"“”‘’（）()\\[\\]{}\\s—-]+$");
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
 	private static final RegistryKey<EquipmentAsset> MUZZLE_EQUIPMENT =
 			RegistryKey.of(
@@ -70,6 +73,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 		);
 		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
 			if (!isMuzzleEquipped(sender)) {
+				return true;
+			}
+			String content = message.getContent().getString();
+			if (MUFFLED_SPEECH.matcher(content).matches() && content.matches(".*[呜啊哇呀嗯哼呃哈唔哦噢诶欸哎咿嘤唉].*")) {
 				return true;
 			}
 
@@ -150,16 +157,25 @@ public final class MuzzleGuardMod implements ModInitializer {
 		try {
 			Class<?> contextClass = context.getClass();
 			ServerWorld world = (ServerWorld) contextClass.getMethod("world").invoke(context);
+			List<PlayerEntity> protectedPlayers = new java.util.ArrayList<>();
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
 			for (UUID actorId : actors) {
 				PlayerEntity player = world.getPlayerByUuid(actorId);
 				if (player != null && isLockboxPhotoEquipped(player)) {
-					return false;
+					protectedPlayers.add(player);
 				}
 			}
 			PlayerEntity requester = (PlayerEntity) contextClass.getMethod("requester").invoke(context);
-			if (requester != null && isLockboxPhotoEquipped(requester)) {
+			if (requester != null && isLockboxPhotoEquipped(requester) && !protectedPlayers.contains(requester)) {
+				protectedPlayers.add(requester);
+			}
+			if (!protectedPlayers.isEmpty()) {
+				int messageIndex = ThreadLocalRandom.current().nextInt(5);
+				Text message = Text.translatable("message.muzzle_guard.lockbox_blocked." + messageIndex);
+				for (PlayerEntity player : protectedPlayers) {
+					player.sendMessage(message);
+				}
 				return false;
 			}
 		} catch (ReflectiveOperationException | ClassCastException exception) {
