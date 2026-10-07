@@ -173,17 +173,18 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (requester != null && isLockboxPhotoEquipped(requester) && !protectedPlayers.contains(requester)) {
 				protectedPlayers.add(requester);
 			}
-			if (protectedPlayers.isEmpty() || onlyPlayers) {
+			boolean playerInitiatedPlayerAnimation = onlyPlayers
+					&& requester != null
+					&& actors.contains(requester.getUuid());
+			if (protectedPlayers.isEmpty() || playerInitiatedPlayerAnimation) {
 				return true;
 			}
-			if (!protectedPlayers.isEmpty()) {
-				int messageIndex = ThreadLocalRandom.current().nextInt(5);
-				Text message = Text.translatable("message.muzzle_guard.lockbox_blocked." + messageIndex);
-				for (PlayerEntity player : protectedPlayers) {
-					player.sendMessage(message, false);
-				}
-				return false;
+			int messageIndex = ThreadLocalRandom.current().nextInt(5);
+			Text message = Text.translatable("message.muzzle_guard.lockbox_blocked." + messageIndex);
+			for (PlayerEntity player : protectedPlayers) {
+				player.sendMessage(message, false);
 			}
+			return false;
 		} catch (ReflectiveOperationException | ClassCastException exception) {
 			System.err.println("[Muzzle Guard] Failed to inspect a Needs of Nature animation: " + exception);
 		}
