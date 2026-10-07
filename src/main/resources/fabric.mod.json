@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "muzzle_guard",
+	"version": "${version}",
+	"name": "Muzzle Guard (Needs of Nature Addon)",
+	"description": "A wearable gag that prevents mouth-related Needs of Nature animations from starting.",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"cn.blockforge.muzzleguard.MuzzleGuardMod"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*",
+		"needsofnature": "*"
+	}
+}
