@@ -18,13 +18,7 @@
 	"message.muzzle_guard.key_no_target": "There is no matching padlocked trinket in the corresponding slot.",
 	"message.muzzle_guard.key_no_trinkets": "Could not read the player's trinket inventory.",
 	"message.muzzle_guard.key_error": "The key action failed. See the local game log at logs/latest.log.",
-	"message.muzzle_guard.muffled": "Your gag muffles your speech into 'Mmmph'.",
 	"item.muzzle_guard.lockbox_photo": "Locket Photo",
 	"item.muzzle_guard.lockbox_photo.desc": "Already in love, so refusing to be NTR'd.",
-	"message.muzzle_guard.lockbox_blocked.0": "Your lover gives you strength. How could you betray them!",
-	"message.muzzle_guard.lockbox_blocked.1": "Think of the one in your heart. You can't do this!",
-	"message.muzzle_guard.lockbox_blocked.2": "Your promise still stands. Refuse this animation!",
-	"message.muzzle_guard.lockbox_blocked.3": "Your lover's photo reminds you: stay faithful!",
-	"message.muzzle_guard.lockbox_blocked.4": "You are in love. You will not betray them!",
 	"itemGroup.muzzle_guard": "Gags and Collars"
 }

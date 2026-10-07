@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
@@ -37,7 +36,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final String KEY_UUID = "muzzle_guard_key";
 	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
 	private static final String LOCKED = "muzzle_guard_locked";
-	private static final Pattern MUFFLED_SPEECH = Pattern.compile("^[呜啊哇呀嗯哼呃哈唔哦噢诶欸哎咿嘤唉，。！？…~～,.!?、：:；;'\"“”‘’（）()\\[\\]{}\\s—-]+$");
+	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
 	private static final Identifier LOCKED_MUZZLE_ID = Identifier.of(MOD_ID, "locked_muzzle");
 	private static final Identifier COLLAR_ID = Identifier.of(MOD_ID, "collar");
@@ -124,12 +123,15 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return true;
 			}
 			String content = message.getContent().getString();
-			if (MUFFLED_SPEECH.matcher(content).matches() && content.matches(".*[呜啊哇呀嗯哼呃哈唔哦噢诶欸哎咿嘤唉].*")) {
-				return true;
-			}
-
-			sender.sendMessage(Text.translatable("message.muzzle_guard.muffled"));
-			Text muffledMessage = sender.getDisplayName().copy().append(Text.literal(": 呜呜呜"));
+			StringBuilder muffledContent = new StringBuilder();
+			content.codePoints().forEach(codePoint -> {
+				if (Character.isLetterOrDigit(codePoint)) {
+					muffledContent.append(MUFFLED_SYLLABLES[ThreadLocalRandom.current().nextInt(MUFFLED_SYLLABLES.length)]);
+				} else {
+					muffledContent.appendCodePoint(codePoint);
+				}
+			});
+			Text muffledMessage = sender.getDisplayName().copy().append(Text.literal(": ")).append(Text.literal(muffledContent.toString()));
 			sender.getEntityWorld().getServer().getPlayerManager().broadcast(
 					muffledMessage,
 					recipient -> muffledMessage,
@@ -178,13 +180,13 @@ public final class MuzzleGuardMod implements ModInitializer {
 		@Override
 		public ActionResult use(World world, PlayerEntity user, Hand hand) {
 			ItemStack stack = user.getStackInHand(hand);
-			if (!world.isClient()) bindOrToggle(stack, user, collarKey);
+			if (!world.isClient()) bindOrToggle(stack, user, user, collarKey);
 			return ActionResult.SUCCESS;
 		}
 
 		@Override
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) bindOrToggle(stack, target, collarKey);
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) bindOrToggle(stack, user, target, collarKey);
 			return ActionResult.SUCCESS;
 		}
 	}
@@ -241,11 +243,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 		return null;
 	}
 
-	private static boolean bindOrToggle(ItemStack key, PlayerEntity target, boolean collarKey) {
+	private static boolean bindOrToggle(ItemStack key, PlayerEntity actor, PlayerEntity target, boolean collarKey) {
 		try {
 			Map<?, ?> groups = getTrinketInventories(target);
 			if (groups == null) {
-				target.sendMessage(Text.translatable("message.muzzle_guard.key_no_trinkets"), false);
+				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_trinkets"), false);
 				return false;
 			}
 			String group = collarKey ? "chest" : "head";
@@ -253,7 +255,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			Object slots = groups.get(group);
 			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot) : null;
 			if (inventory == null) {
-				target.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
 				return false;
 			}
 			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
@@ -274,7 +276,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 					boolean locked = !data.getBoolean(LOCKED).orElse(false);
 					data.putBoolean(LOCKED, locked);
 				} else {
-					target.sendMessage(Text.translatable("message.muzzle_guard.key_mismatch"), false);
+					actor.sendMessage(Text.translatable("message.muzzle_guard.key_mismatch"), false);
 					return false;
 				}
 				setCustomData(worn, data);
@@ -284,14 +286,16 @@ public final class MuzzleGuardMod implements ModInitializer {
 						: data.getBoolean(LOCKED).orElse(false)
 								? "message.muzzle_guard.locked"
 								: "message.muzzle_guard.unlocked";
-				target.sendMessage(Text.translatable(message), false);
+				Text result = Text.translatable(message);
+				actor.sendMessage(result, false);
+				if (!actor.getUuid().equals(target.getUuid())) target.sendMessage(result, false);
 				return true;
 			}
-			target.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+			actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
 		} catch (ReflectiveOperationException exception) {
 			System.err.println("[Muzzle Guard] Failed to bind or toggle Trinket lock:");
 			exception.printStackTrace(System.err);
-			target.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
+			actor.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
 		}
 		return false;
 	}
@@ -314,14 +318,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 	private static void setCustomData(ItemStack stack, NbtCompound data) {
 		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(data));
-	}
-
-	public static boolean isNecklaceTrinket(ItemStack stack) {
-		return stack.isOf(LOCKBOX_PHOTO) || stack.isOf(COLLAR) || stack.isOf(LOCKED_COLLAR);
-	}
-
-	public static boolean canUnequipNecklace(ItemStack stack) {
-		return !stack.isOf(LOCKED_COLLAR) || !customData(stack).getBoolean(LOCKED).orElse(false);
 	}
 
 	private static void registerTrinketRules() {
@@ -444,11 +440,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 					&& actors.contains(requester.getUuid());
 			if (protectedPlayers.isEmpty() || playerInitiatedPlayerAnimation) {
 				return true;
-			}
-			int messageIndex = ThreadLocalRandom.current().nextInt(5);
-			Text message = Text.translatable("message.muzzle_guard.lockbox_blocked." + messageIndex);
-			for (PlayerEntity player : protectedPlayers) {
-				player.sendMessage(message, false);
 			}
 			return false;
 		} catch (ReflectiveOperationException | ClassCastException exception) {
