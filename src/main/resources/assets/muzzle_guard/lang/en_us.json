@@ -1,5 +1,6 @@
 {
 	"item.muzzle_guard.muzzle": "Gag",
-	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, blocks mouth-related Needs of Nature animations and chat messages.",
+	"item.muzzle_guard.muzzle.desc": "When worn in the head slot, blocks mouth-related Needs of Nature animations. Chat is replaced with 'Mmmph'.",
+	"message.muzzle_guard.muffled": "Your gag muffles your speech into 'Mmmph'.",
 	"itemGroup.muzzle_guard": "Gags"
 }

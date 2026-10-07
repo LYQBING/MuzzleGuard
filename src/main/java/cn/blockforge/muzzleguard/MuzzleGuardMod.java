@@ -5,7 +5,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -35,6 +36,14 @@ public final class MuzzleGuardMod implements ModInitializer {
 					EquipmentAssetKeys.IRON.getRegistryRef(),
 					MUZZLE_ID
 			);
+	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
+	public static final Item LOCKBOX_PHOTO = Registry.register(
+			Registries.ITEM,
+			LOCKBOX_PHOTO_ID,
+			new Item(new Item.Settings()
+					.registryKey(RegistryKey.of(RegistryKeys.ITEM, LOCKBOX_PHOTO_ID))
+					.maxCount(1))
+	);
 	public static final Item MUZZLE = Registry.register(
 			Registries.ITEM,
 			MUZZLE_ID,
@@ -53,15 +62,41 @@ public final class MuzzleGuardMod implements ModInitializer {
 				FabricItemGroup.builder()
 						.displayName(Text.translatable("itemGroup.muzzle_guard"))
 						.icon(() -> new ItemStack(MUZZLE))
-						.entries((context, entries) -> entries.add(MUZZLE))
+						.entries((context, entries) -> {
+							entries.add(MUZZLE);
+							entries.add(LOCKBOX_PHOTO);
+						})
 						.build()
 		);
-		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> !isMuzzleEquipped(sender));
+		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
+			if (!isMuzzleEquipped(sender)) {
+				return true;
+			}
+
+			sender.sendMessage(Text.translatable("message.muzzle_guard.muffled"));
+			Text muffledMessage = sender.getDisplayName().copy().append(Text.literal(": 呜呜呜"));
+			sender.getServer().getPlayerManager().broadcast(muffledMessage, recipient -> muffledMessage, false);
+			return false;
+		});
 		registerAnimationBlocker();
 	}
 
 	private static boolean isMuzzleEquipped(PlayerEntity player) {
 		return player.getEquippedStack(EquipmentSlot.HEAD).isOf(MUZZLE);
+	}
+
+	private static boolean isLockboxPhotoEquipped(PlayerEntity player) {
+		try {
+			Class<?> trinketsApi = Class.forName("dev.emi.trinkets.api.TrinketsApi");
+			Object component = trinketsApi.getMethod("getTrinketComponent", LivingEntity.class).invoke(null, player);
+			if (component instanceof Optional<?> optional && optional.isPresent()) {
+				Class<?> componentClass = Class.forName("dev.emi.trinkets.api.TrinketComponent");
+				return (boolean) componentClass.getMethod("isEquipped", Item.class).invoke(optional.get(), LOCKBOX_PHOTO);
+			}
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to inspect the Trinkets necklace slot: " + exception);
+		}
+		return false;
 	}
 
 	private static void registerAnimationBlocker() {
@@ -110,34 +145,22 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static boolean allowStart(Object context) {
 		try {
 			Class<?> contextClass = context.getClass();
-			Object animationId = contextClass.getMethod("animationId").invoke(context);
-			Object actorKeys = contextClass.getMethod("actorKeys").invoke(context);
-			if (!isMouthAnimation(String.valueOf(animationId), actorKeys)) {
-				return true;
-			}
-
 			ServerWorld world = (ServerWorld) contextClass.getMethod("world").invoke(context);
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
 			for (UUID actorId : actors) {
 				PlayerEntity player = world.getPlayerByUuid(actorId);
-				if (player != null && isMuzzleEquipped(player)) {
+				if (player != null && isLockboxPhotoEquipped(player)) {
 					return false;
 				}
+			}
+			PlayerEntity requester = (PlayerEntity) contextClass.getMethod("requester").invoke(context);
+			if (requester != null && isLockboxPhotoEquipped(requester)) {
+				return false;
 			}
 		} catch (ReflectiveOperationException | ClassCastException exception) {
 			System.err.println("[Muzzle Guard] Failed to inspect a Needs of Nature animation: " + exception);
 		}
 		return true;
-	}
-
-	private static boolean isMouthAnimation(String animationId, Object actorKeys) {
-		String searchable = animationId.toLowerCase(Locale.ROOT) + " " + String.valueOf(actorKeys).toLowerCase(Locale.ROOT);
-		return searchable.contains("oral")
-				|| searchable.contains("mouth")
-				|| searchable.contains("kiss")
-				|| searchable.contains("fellatio")
-				|| searchable.contains("blowjob")
-				|| searchable.contains("suck");
 	}
 }

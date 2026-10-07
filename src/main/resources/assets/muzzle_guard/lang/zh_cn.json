@@ -1,5 +1,6 @@
 {
 	"item.muzzle_guard.muzzle": "口球",
-	"item.muzzle_guard.muzzle.desc": "戴在头部装备栏时，阻止口部相关的自然之需动画并无法发送聊天。",
+	"item.muzzle_guard.muzzle.desc": "戴在头部装备栏时，阻止口部相关的自然之需动画。聊天会被转成‘呜呜呜’。",
+	"message.muzzle_guard.muffled": "你戴着口球，只能发出‘呜呜呜’。",
 	"itemGroup.muzzle_guard": "口球"
 }
