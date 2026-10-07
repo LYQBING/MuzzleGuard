@@ -17,6 +17,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipDisplayComponent;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -219,17 +220,17 @@ public final class MuzzleGuardMod implements ModInitializer {
 		}
 
 		@Override
-		public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-			super.appendTooltip(stack, context, tooltip, type);
+		public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent display, Consumer<Text> textConsumer, TooltipType type) {
+			super.appendTooltip(stack, context, display, textConsumer, type);
 			if (this != LOCKED_MUZZLE && this != LOCKED_COLLAR) return;
 
 			NbtCompound data = customData(stack);
 			String boundKey = data.getString(BOUND_KEY_UUID).orElse("");
-			tooltip.add(Text.translatable(boundKey.isEmpty()
+			textConsumer.accept(Text.translatable(boundKey.isEmpty()
 					? "tooltip.muzzle_guard.unbound"
 					: "tooltip.muzzle_guard.bound_key", shortId(boundKey)));
 			if (!boundKey.isEmpty()) {
-				tooltip.add(Text.translatable(data.getBoolean(LOCKED).orElse(false)
+				textConsumer.accept(Text.translatable(data.getBoolean(LOCKED).orElse(false)
 						? "tooltip.muzzle_guard.locked"
 						: "tooltip.muzzle_guard.unlocked"));
 			}
@@ -260,10 +261,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 		}
 
 		@Override
-		public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-			super.appendTooltip(stack, context, tooltip, type);
+		public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent display, Consumer<Text> textConsumer, TooltipType type) {
+			super.appendTooltip(stack, context, display, textConsumer, type);
 			String id = customData(stack).getString(KEY_UUID).orElse("");
-			if (!id.isEmpty()) tooltip.add(Text.translatable("tooltip.muzzle_guard.key_id", shortId(id)));
+			if (!id.isEmpty()) textConsumer.accept(Text.translatable("tooltip.muzzle_guard.key_id", shortId(id)));
 		}
 
 		@Override
