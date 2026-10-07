@@ -331,7 +331,9 @@ public final class MuzzleGuardMod implements ModInitializer {
 								&& customData(stack).getBoolean(LOCKED).orElse(false);
 						boolean canUnequip = !lockable || (!stack.isEmpty() && !locked);
 						if (item == COLLAR || item == LOCKED_COLLAR) {
-							System.out.println("[Muzzle Guard] Necklace canUnequip: item="
+							String side = args != null && args.length > 2 && args[2] instanceof LivingEntity entity
+									&& entity.getEntityWorld().isClient() ? "client" : "server";
+							System.out.println("[Muzzle Guard] Necklace canUnequip (" + side + "): item="
 									+ Registries.ITEM.getId(stack.getItem()) + ", locked=" + locked
 									+ ", allowed=" + canUnequip);
 						}
