@@ -59,7 +59,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 					new Class<?>[]{callbackClass},
 					MuzzleGuardMod::invokeCallback
 			);
-			Method register = event.getClass().getMethod("register", callbackClass);
+			Method register = event.getClass().getMethod("register", Object.class);
 			register.invoke(event, callback);
 		} catch (ReflectiveOperationException | LinkageError exception) {
 			throw new IllegalStateException("Could not register the Needs of Nature animation blocker", exception);
