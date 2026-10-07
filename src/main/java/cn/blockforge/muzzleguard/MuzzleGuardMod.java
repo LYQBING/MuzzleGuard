@@ -106,6 +106,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			}
 		} catch (ReflectiveOperationException exception) {
 			System.err.println("[Muzzle Guard] Failed to inspect the Trinkets necklace slot: " + exception);
+			return true;
 		}
 		return false;
 	}
@@ -187,7 +188,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			return false;
 		} catch (ReflectiveOperationException | ClassCastException exception) {
 			System.err.println("[Muzzle Guard] Failed to inspect a Needs of Nature animation: " + exception);
+			return false;
 		}
-		return true;
 	}
 }
