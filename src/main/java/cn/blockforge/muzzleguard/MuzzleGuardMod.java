@@ -87,6 +87,19 @@ public final class MuzzleGuardMod implements ModInitializer {
 		);
 	}
 
+	private static Object invokeApiMethod(Class<?> api, Object receiver, String[] names, Class<?>[] parameterTypes, Object... args)
+			throws ReflectiveOperationException {
+		NoSuchMethodException missing = null;
+		for (String name : names) {
+			try {
+				return api.getMethod(name, parameterTypes).invoke(receiver, args);
+			} catch (NoSuchMethodException exception) {
+				missing = exception;
+			}
+		}
+		throw missing == null ? new NoSuchMethodException(api.getName()) : missing;
+	}
+
 	@Override
 	public void onInitialize() {
 		Registry.register(
@@ -201,11 +214,14 @@ public final class MuzzleGuardMod implements ModInitializer {
 			Object slots = groups == null ? null : groups.get(group);
 			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot) : null;
 			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
-			if (inventory == null || (int) inventoryApi.getMethod("size").invoke(inventory) < 1) return false;
-			ItemStack equipped = (ItemStack) inventoryApi.getMethod("getStack", int.class).invoke(inventory, 0);
+			if (inventory == null || ((Number) invokeApiMethod(inventoryApi, inventory,
+					new String[]{"size", "method_5439"}, new Class<?>[0])).intValue() < 1) return false;
+			ItemStack equipped = (ItemStack) invokeApiMethod(inventoryApi, inventory,
+					new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, 0);
 			if (!equipped.isEmpty()) return false;
 			ItemStack placed = held.copyWithCount(1);
-			inventoryApi.getMethod("setStack", int.class, ItemStack.class).invoke(inventory, 0, placed);
+			invokeApiMethod(inventoryApi, inventory, new String[]{"setStack", "method_5447"},
+					new Class<?>[]{int.class, ItemStack.class}, 0, placed);
 			inventoryApi.getMethod("markUpdate", PlayerEntity.class).invoke(inventory, target);
 			if (!player.getAbilities().creativeMode) held.decrement(1);
 			return true;
@@ -241,9 +257,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return false;
 			}
 			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
-			int size = ((Number) inventoryApi.getMethod("size").invoke(inventory)).intValue();
+			int size = ((Number) invokeApiMethod(inventoryApi, inventory,
+					new String[]{"size", "method_5439"}, new Class<?>[0])).intValue();
 			for (int index = 0; index < size; index++) {
-				ItemStack worn = (ItemStack) inventoryApi.getMethod("getStack", int.class).invoke(inventory, index);
+				ItemStack worn = (ItemStack) invokeApiMethod(inventoryApi, inventory,
+						new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, index);
 				boolean matching = collarKey ? worn.isOf(LOCKED_COLLAR) : worn.isOf(LOCKED_MUZZLE);
 				if (!matching) continue;
 				String id = keyId(key);
@@ -269,7 +287,8 @@ public final class MuzzleGuardMod implements ModInitializer {
 			}
 			target.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
 		} catch (ReflectiveOperationException exception) {
-			System.err.println("[Muzzle Guard] Failed to bind or toggle Trinket lock: " + exception);
+			System.err.println("[Muzzle Guard] Failed to bind or toggle Trinket lock:");
+			exception.printStackTrace(System.err);
 			target.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
 		}
 		return false;

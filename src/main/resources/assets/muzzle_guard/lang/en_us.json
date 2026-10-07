@@ -17,7 +17,7 @@
 	"message.muzzle_guard.key_mismatch": "This trinket is already bound to another key.",
 	"message.muzzle_guard.key_no_target": "There is no matching padlocked trinket in the corresponding slot.",
 	"message.muzzle_guard.key_no_trinkets": "Could not read the player's trinket inventory.",
-	"message.muzzle_guard.key_error": "The key action failed. Check the server log.",
+	"message.muzzle_guard.key_error": "The key action failed. See the local game log at logs/latest.log.",
 	"message.muzzle_guard.muffled": "Your gag muffles your speech into 'Mmmph'.",
 	"item.muzzle_guard.lockbox_photo": "Locket Photo",
 	"item.muzzle_guard.lockbox_photo.desc": "Already in love, so refusing to be NTR'd.",

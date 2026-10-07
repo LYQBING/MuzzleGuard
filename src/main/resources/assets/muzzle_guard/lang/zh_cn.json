@@ -17,7 +17,7 @@
 	"message.muzzle_guard.key_mismatch": "这件饰品已绑定另一把钥匙。",
 	"message.muzzle_guard.key_no_target": "对应槽位没有可绑定的挂锁饰品。",
 	"message.muzzle_guard.key_no_trinkets": "无法读取玩家的饰品栏。",
-	"message.muzzle_guard.key_error": "钥匙操作失败，请检查服务端日志。",
+	"message.muzzle_guard.key_error": "钥匙操作失败，详情见本地游戏日志 logs/latest.log。",
 	"message.muzzle_guard.muffled": "你戴着口球，只能发出‘呜呜呜’。",
 	"item.muzzle_guard.lockbox_photo": "锁盒照片",
 	"item.muzzle_guard.lockbox_photo.desc": "有了相恋的人，因此拒绝被牛头人。",
