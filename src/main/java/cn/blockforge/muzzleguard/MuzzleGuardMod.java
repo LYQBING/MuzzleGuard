@@ -240,14 +240,29 @@ public final class MuzzleGuardMod implements ModInitializer {
 		@Override
 		public ActionResult use(World world, PlayerEntity user, Hand hand) {
 			ItemStack stack = user.getStackInHand(hand);
-			if (!world.isClient()) equipHeldItem(user, user, stack, group, slot);
+			if (!world.isClient()) {
+				if (equipHeldItem(user, user, stack, group, slot)) {
+					user.sendMessage(Text.translatable("message.muzzle_guard.equipped_self"), false);
+				} else {
+					user.sendMessage(Text.translatable("message.muzzle_guard.equip_failed"), false);
+				}
+			}
 			return ActionResult.SUCCESS;
 		}
 
 		@Override
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
 			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
-				equipHeldItem(user, target, stack, group, slot);
+				ItemStack held = user.getStackInHand(hand);
+				if (equipHeldItem(user, target, held, group, slot)) {
+					Text message = Text.translatable("message.muzzle_guard.equipped_other", target.getDisplayName());
+					user.sendMessage(message, false);
+					if (!user.getUuid().equals(target.getUuid())) {
+						target.sendMessage(Text.translatable("message.muzzle_guard.equipped_by", user.getDisplayName()), false);
+					}
+				} else {
+					user.sendMessage(Text.translatable("message.muzzle_guard.equip_failed"), false);
+				}
 			}
 			return ActionResult.SUCCESS;
 		}
@@ -338,7 +353,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 			invokeApiMethod(inventoryApi, inventory, new String[]{"setStack", "method_5447"},
 					new Class<?>[]{int.class, ItemStack.class}, 0, placed);
 			inventoryApi.getMethod("markUpdate").invoke(inventory);
-			if (!player.getAbilities().creativeMode) held.decrement(1);
+				if (!player.getAbilities().creativeMode) {
+					held.decrement(1);
+					player.getInventory().markDirty();
+				}
 			return true;
 		} catch (ReflectiveOperationException exception) {
 			System.err.println("[Muzzle Guard] Failed to equip Trinket: " + exception);
