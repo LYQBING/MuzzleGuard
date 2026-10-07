@@ -174,7 +174,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 				int messageIndex = ThreadLocalRandom.current().nextInt(5);
 				Text message = Text.translatable("message.muzzle_guard.lockbox_blocked." + messageIndex);
 				for (PlayerEntity player : protectedPlayers) {
-					player.sendMessage(message);
+					player.sendMessage(message, false);
 				}
 				return false;
 			}
