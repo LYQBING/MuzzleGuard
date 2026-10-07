@@ -316,6 +316,14 @@ public final class MuzzleGuardMod implements ModInitializer {
 		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(data));
 	}
 
+	public static boolean isNecklaceTrinket(ItemStack stack) {
+		return stack.isOf(LOCKBOX_PHOTO) || stack.isOf(COLLAR) || stack.isOf(LOCKED_COLLAR);
+	}
+
+	public static boolean canUnequipNecklace(ItemStack stack) {
+		return !stack.isOf(LOCKED_COLLAR) || !customData(stack).getBoolean(LOCKED).orElse(false);
+	}
+
 	private static void registerTrinketRules() {
 		try {
 			Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
