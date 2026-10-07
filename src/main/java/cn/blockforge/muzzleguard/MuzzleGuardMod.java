@@ -15,16 +15,22 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
+	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
 	public static final Item MUZZLE = Registry.register(
 			Registries.ITEM,
-			Identifier.of(MOD_ID, "muzzle"),
-			new Item(new Item.Settings().maxCount(1).equippable(EquipmentSlot.HEAD))
+			MUZZLE_ID,
+			new Item(new Item.Settings()
+					.registryKey(RegistryKey.of(RegistryKeys.ITEM, MUZZLE_ID))
+					.maxCount(1)
+					.equippable(EquipmentSlot.HEAD))
 	);
 
 	@Override
