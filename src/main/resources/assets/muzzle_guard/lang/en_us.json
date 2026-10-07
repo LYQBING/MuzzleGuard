@@ -11,7 +11,7 @@
 	"message.muzzle_guard.equip_failed": "Could not equip: the matching trinket slot may already be occupied.",
 	"item.muzzle_guard.locked_collar": "Padlocked Collar",
 	"item.muzzle_guard.locked_collar.desc": "Wear in the necklace trinket slot. Unlocked by default; bind and toggle it with a key.",
-	"item.muzzle_guard.key": "Universal Padlock Key",
+	"item.muzzle_guard.key": "Key",
 	"item.muzzle_guard.key.desc": "Use on yourself or another player to bind an unbound padlocked trinket; use it again to toggle the bound trinket's lock.",
 	"message.muzzle_guard.key_bound_to": "This key is now bound to %s.",
 	"message.muzzle_guard.locked_item": "%s is now locked.",

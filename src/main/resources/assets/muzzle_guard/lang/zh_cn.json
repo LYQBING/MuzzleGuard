@@ -11,7 +11,7 @@
 	"message.muzzle_guard.equip_failed": "无法装备：对应饰品槽可能已被占用。",
 	"item.muzzle_guard.locked_collar": "挂锁项圈",
 	"item.muzzle_guard.locked_collar.desc": "可佩戴在项链饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
-	"item.muzzle_guard.key": "万能挂锁钥匙",
+	"item.muzzle_guard.key": "钥匙",
 	"item.muzzle_guard.key.desc": "右键自己或其他玩家，绑定一个未绑定的挂锁饰品；再次使用可切换已绑定饰品的锁定状态。",
 	"message.muzzle_guard.key_bound_to": "此钥匙已绑定到 %s。",
 	"message.muzzle_guard.locked_item": "%s 已上锁。",
