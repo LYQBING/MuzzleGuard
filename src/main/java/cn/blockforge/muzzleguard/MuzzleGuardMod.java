@@ -207,7 +207,8 @@ public final class MuzzleGuardMod implements ModInitializer {
 		Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
 		Object component = api.getMethod("getTrinketComponent", LivingEntity.class).invoke(null, player);
 		if (component instanceof Optional<?> optional && optional.isPresent()) {
-			return (Map<?, ?>) optional.get().getClass().getMethod("getInventory").invoke(optional.get());
+			Class<?> componentApi = Class.forName("dev.emi.trinkets.api.TrinketComponent");
+			return (Map<?, ?>) componentApi.getMethod("getInventory").invoke(optional.get());
 		}
 		return null;
 	}
@@ -283,9 +284,10 @@ public final class MuzzleGuardMod implements ModInitializer {
 			for (Item item : new Item[]{MUZZLE, LOCKED_MUZZLE, COLLAR, LOCKED_COLLAR, LOCKBOX_PHOTO}) {
 				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
-					if (method.getName().equals("canUnequip") && args != null && args.length > 0) {
+					if (method.getName().equals("canUnequip") && args != null && args.length > 0
+							&& args[0] instanceof ItemStack stack) {
 						if (!lockable) return Boolean.TRUE;
-						NbtCompound data = customData((ItemStack) args[0]);
+						NbtCompound data = customData(stack);
 						return !data.getBoolean(LOCKED).orElse(false);
 					}
 					if (method.getName().equals("toString")) return "MuzzleGuardLockableTrinket";
