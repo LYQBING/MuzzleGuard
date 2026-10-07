@@ -372,6 +372,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			}
 			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
 			String id = customData(key).getString(KEY_UUID).orElse("");
+			String boundKeyId = id;
 			List<LockCandidate> candidates = new ArrayList<>();
 			for (String[] slotPath : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
 				Object slots = groups.get(slotPath[0]);
@@ -385,8 +386,8 @@ public final class MuzzleGuardMod implements ModInitializer {
 					if (isLockableTrinket(worn)) candidates.add(new LockCandidate(worn, inventory));
 				}
 			}
-			LockCandidate selected = id.isEmpty() ? null : candidates.stream()
-					.filter(candidate -> candidate.boundKey.equals(id))
+			LockCandidate selected = boundKeyId.isEmpty() ? null : candidates.stream()
+					.filter(candidate -> candidate.boundKey.equals(boundKeyId))
 					.findFirst().orElse(null);
 			if (selected == null) {
 				selected = candidates.stream().filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null);
