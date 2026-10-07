@@ -1,6 +1,7 @@
 {
   "pack": {
 	"description": "Muzzle Guard resources",
+	"supported_formats": [75, 81],
 	"min_format": 75,
 	"max_format": 75
   }

@@ -135,25 +135,25 @@ public final class MuzzleGuardMod implements ModInitializer {
 		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseEntityCallback", (proxy, method, args) -> {
 			if (args == null || args.length < 4 || !(args[0] instanceof PlayerEntity player)
 					|| !(args[3] instanceof PlayerEntity target)) {
-				return actionResult("PASS");
+				return actionResult(method, "PASS");
 			}
-			if (player.getEntityWorld().isClient()) return actionResult("PASS");
+			if (player.getEntityWorld().isClient()) return actionResult(method, "PASS");
 			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
 			if (held.isOf(KEY)) {
-				return bindOrToggle(held, target) ? actionResult("SUCCESS") : actionResult("PASS");
+				return bindOrToggle(held, target) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
 			}
-			return equipHeldItem(player, target, held) ? actionResult("SUCCESS") : actionResult("PASS");
+			return equipHeldItem(player, target, held) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
 		});
 		registerFabricCallback("net.fabricmc.fabric.api.event.player.UseItemCallback", (proxy, method, args) -> {
 			if (args == null || args.length < 3 || !(args[0] instanceof PlayerEntity player)) {
-				return actionResult("PASS");
+				return actionResult(method, "PASS");
 			}
-			if (player.getEntityWorld().isClient()) return actionResult("PASS");
+			if (player.getEntityWorld().isClient()) return actionResult(method, "PASS");
 			ItemStack held = player.getStackInHand((net.minecraft.util.Hand) args[2]);
 			if (held.isOf(KEY)) {
-				return bindOrToggle(held, player) ? actionResult("SUCCESS") : actionResult("PASS");
+				return bindOrToggle(held, player) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
 			}
-			return equipHeldItem(player, player, held) ? actionResult("SUCCESS") : actionResult("PASS");
+			return equipHeldItem(player, player, held) ? actionResult(method, "SUCCESS") : actionResult(method, "PASS");
 		});
 	}
 
@@ -170,11 +170,27 @@ public final class MuzzleGuardMod implements ModInitializer {
 		}
 	}
 
-	private static Object actionResult(String name) {
+	private static Object actionResult(Method callbackMethod, String name) {
+		Class<?> resultType = callbackMethod.getReturnType();
+		if (resultType.getName().equals("net.minecraft.class_1269")) {
+			try {
+				Class<?> interactionResult = Class.forName("net.minecraft.class_1269");
+				for (Object value : interactionResult.getEnumConstants()) {
+					if (((Enum<?>) value).name().equals(name)) return value;
+				}
+			} catch (ClassNotFoundException exception) {
+				throw new IllegalStateException("Could not resolve Minecraft interaction result", exception);
+			}
+		}
+		if (resultType.isEnum()) {
+			for (Object value : resultType.getEnumConstants()) {
+				if (((Enum<?>) value).name().equals(name)) return value;
+			}
+		}
 		try {
-			return Class.forName("net.minecraft.util.ActionResult").getField(name).get(null);
+			return resultType.getField(name).get(null);
 		} catch (ReflectiveOperationException exception) {
-			throw new IllegalStateException("Could not resolve action result " + name, exception);
+			throw new IllegalStateException("Could not resolve callback result " + resultType.getName() + "." + name, exception);
 		}
 	}
 
@@ -287,9 +303,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 			Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
 			Class<?> trinket = Class.forName("dev.emi.trinkets.api.Trinket");
 			MethodHandles.Lookup lookup = MethodHandles.lookup();
-			for (Item item : new Item[]{LOCKED_MUZZLE, LOCKED_COLLAR}) {
+			for (Item item : new Item[]{MUZZLE, LOCKED_MUZZLE, COLLAR, LOCKED_COLLAR, LOCKBOX_PHOTO}) {
+				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
 					if (method.getName().equals("canUnequip") && args != null && args.length > 0) {
+						if (!lockable) return true;
 						NbtCompound data = customData((ItemStack) args[0]);
 						return !data.getBoolean(LOCKED).orElse(false);
 					}
