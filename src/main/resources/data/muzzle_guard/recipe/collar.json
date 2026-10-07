@@ -7,9 +7,10 @@
 		" L "
 	],
 	"key": {
-		"L": "minecraft:leather"
+		"L": { "item": "minecraft:leather" }
 	},
 	"result": {
-		"id": "muzzle_guard:collar"
+		"id": "muzzle_guard:collar",
+		"count": 1
 	}
 }

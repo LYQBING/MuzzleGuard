@@ -7,10 +7,11 @@
 		" I "
 	],
 	"key": {
-		"I": "minecraft:iron_nugget",
-		"G": "minecraft:gold_nugget"
+		"I": { "item": "minecraft:iron_nugget" },
+		"G": { "item": "minecraft:gold_nugget" }
 	},
 	"result": {
-		"id": "muzzle_guard:key"
+		"id": "muzzle_guard:key",
+		"count": 1
 	}
 }

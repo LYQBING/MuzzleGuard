@@ -7,10 +7,11 @@
 		" I "
 	],
 	"key": {
-		"L": "minecraft:leather",
-		"I": "minecraft:iron_nugget"
+		"L": { "item": "minecraft:leather" },
+		"I": { "item": "minecraft:iron_nugget" }
 	},
 	"result": {
-		"id": "muzzle_guard:locked_collar"
+		"id": "muzzle_guard:locked_collar",
+		"count": 1
 	}
 }

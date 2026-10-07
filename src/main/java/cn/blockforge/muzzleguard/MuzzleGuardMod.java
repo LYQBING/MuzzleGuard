@@ -4,8 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
@@ -172,23 +170,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 	private static Object actionResult(Method callbackMethod, String name) {
 		Class<?> resultType = callbackMethod.getReturnType();
-		if (resultType.getName().equals("net.minecraft.class_1269")) {
-			try {
-				Class<?> interactionResult = Class.forName("net.minecraft.class_1269");
-				for (Object value : interactionResult.getEnumConstants()) {
-					if (((Enum<?>) value).name().equals(name)) return value;
-				}
-			} catch (ClassNotFoundException exception) {
-				throw new IllegalStateException("Could not resolve Minecraft interaction result", exception);
-			}
-		}
-		if (resultType.isEnum()) {
-			for (Object value : resultType.getEnumConstants()) {
-				if (((Enum<?>) value).name().equals(name)) return value;
-			}
-		}
 		try {
-			return resultType.getField(name).get(null);
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Could not resolve callback result " + resultType.getName() + "." + name, exception);
 		}
@@ -237,7 +219,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 	private static boolean bindOrToggle(ItemStack key, PlayerEntity target) {
 		try {
-			String id = keyId(key);
 			Map<?, ?> groups = getTrinketInventories(target);
 			if (groups == null) return false;
 			for (String[] slot : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
@@ -245,10 +226,12 @@ public final class MuzzleGuardMod implements ModInitializer {
 				Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get(slot[1]) : null;
 				if (inventory == null) continue;
 				Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
-				int size = (int) inventoryApi.getMethod("size").invoke(inventory);
+				int size = ((Number) inventoryApi.getMethod("size").invoke(inventory)).intValue();
+				if (size <= 0) continue;
 				for (int index = 0; index < size; index++) {
 					ItemStack worn = (ItemStack) inventoryApi.getMethod("getStack", int.class).invoke(inventory, index);
 					if (worn.isOf(LOCKED_MUZZLE) || worn.isOf(LOCKED_COLLAR)) {
+						String id = keyId(key);
 						NbtCompound data = customData(worn);
 						String bound = data.getString(BOUND_KEY_UUID).orElse("");
 						if (bound.isEmpty()) {
@@ -302,7 +285,6 @@ public final class MuzzleGuardMod implements ModInitializer {
 		try {
 			Class<?> api = Class.forName("dev.emi.trinkets.api.TrinketsApi");
 			Class<?> trinket = Class.forName("dev.emi.trinkets.api.Trinket");
-			MethodHandles.Lookup lookup = MethodHandles.lookup();
 			for (Item item : new Item[]{MUZZLE, LOCKED_MUZZLE, COLLAR, LOCKED_COLLAR, LOCKBOX_PHOTO}) {
 				boolean lockable = item == LOCKED_MUZZLE || item == LOCKED_COLLAR;
 				Object implementation = Proxy.newProxyInstance(trinket.getClassLoader(), new Class<?>[]{trinket}, (proxy, method, args) -> {
@@ -314,12 +296,9 @@ public final class MuzzleGuardMod implements ModInitializer {
 					if (method.getName().equals("toString")) return "MuzzleGuardLockableTrinket";
 					if (method.getName().equals("hashCode")) return System.identityHashCode(proxy);
 					if (method.getName().equals("equals")) return proxy == args[0];
-					if (method.isDefault()) {
-						return MethodHandles.privateLookupIn(trinket, lookup)
-								.findSpecial(trinket, method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()), trinket)
-								.bindTo(proxy).invokeWithArguments(args == null ? new Object[0] : args);
-					}
-					return method.getReturnType() == boolean.class;
+					return method.isDefault()
+							? InvocationHandler.invokeDefault(proxy, method, args == null ? new Object[0] : args)
+							: null;
 				});
 				api.getMethod("registerTrinket", Item.class, trinket).invoke(null, item, implementation);
 			}
