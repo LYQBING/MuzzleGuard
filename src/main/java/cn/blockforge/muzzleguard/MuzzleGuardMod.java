@@ -368,6 +368,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 				user.sendMessage(Text.translatable("message.muzzle_guard.controller_no_collar"), false);
 				return;
 			}
+			if (collar.isOf(LOCKED_COLLAR) && customData(collar).getBoolean(LOCKED).orElse(false)
+					&& !hasMatchingKey(user, customData(collar).getString(BOUND_KEY_UUID).orElse(""))) {
+				user.sendMessage(Text.translatable("message.muzzle_guard.controller_collar_locked"), false);
+				return;
+			}
 			collarId = getOrCreateCollarId(collar);
 			markNecklaceInventoryUpdated(selectedPlayer);
 			controllerData.putString(CONTROLLER_PLAYER_UUID, selectedPlayer.getUuidAsString());
@@ -396,6 +401,19 @@ public final class MuzzleGuardMod implements ModInitializer {
 		if (!user.getUuid().equals(target.getUuid())) {
 			target.sendMessage(Text.translatable("message.muzzle_guard.controller_shocked_target"), false);
 		}
+	}
+
+	private static boolean hasMatchingKey(PlayerEntity player, String boundKeyId) {
+		if (boundKeyId.isEmpty()) return false;
+		for (int slot = 0; slot < player.getInventory().size(); slot++) {
+			ItemStack stack = player.getInventory().getStack(slot);
+			if (stack.isOf(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
+		}
+		for (Hand hand : Hand.values()) {
+			ItemStack stack = player.getStackInHand(hand);
+			if (stack.isOf(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
+		}
+		return false;
 	}
 
 	private static ItemStack getEquippedCollar(PlayerEntity player) {

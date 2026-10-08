@@ -32,6 +32,7 @@
 	"item.muzzle_guard.shock_controller.desc": "首次右键绑定目标玩家及其当时佩戴的项圈；之后右键使其受到 1 点伤害。玩家离线或项圈被卸下/更换时，下次使用会解除绑定。",
 	"tooltip.muzzle_guard.controller_bound": "绑定玩家编号：%1$s；项圈编号：%2$s",
 	"message.muzzle_guard.controller_no_collar": "目标未佩戴项圈或挂锁项圈，无法绑定。",
+	"message.muzzle_guard.controller_collar_locked": "挂锁项圈仍处于锁定状态；需先解锁或持有对应钥匙才能绑定。",
 	"message.muzzle_guard.controller_bound": "电击控制器已绑定到 %1$s（项圈编号：%2$s）。",
 	"message.muzzle_guard.controller_unbound": "目标玩家离线或已卸下/更换项圈，电击控制器已解除绑定。",
 	"message.muzzle_guard.controller_shocked": "你对 %s 使用了电击控制器。",

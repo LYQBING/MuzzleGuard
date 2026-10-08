@@ -32,6 +32,7 @@
 	"item.muzzle_guard.shock_controller.desc": "First use binds a player and the collar they are wearing; later uses deal 1 damage. If they go offline or remove/change the collar, the next use unbinds the controller.",
 	"tooltip.muzzle_guard.controller_bound": "Player ID: %1$s; Collar ID: %2$s",
 	"message.muzzle_guard.controller_no_collar": "The target is not wearing a collar or padlocked collar.",
+	"message.muzzle_guard.controller_collar_locked": "The padlocked collar is still locked. Unlock it first or hold its matching key to bind.",
 	"message.muzzle_guard.controller_bound": "The shock controller is bound to %1$s (collar ID: %2$s).",
 	"message.muzzle_guard.controller_unbound": "The target is offline or removed/changed the collar; the shock controller is now unbound.",
 	"message.muzzle_guard.controller_shocked": "You used the shock controller on %s.",

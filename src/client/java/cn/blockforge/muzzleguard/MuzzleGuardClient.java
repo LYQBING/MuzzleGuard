@@ -25,9 +25,6 @@ public final class MuzzleGuardClient implements ClientModInitializer {
 			Method register = registryType.getMethod("registerRenderer", Item.class, rendererType);
 			register.invoke(null, MuzzleGuardMod.MUZZLE, renderer(rendererType, true));
 			register.invoke(null, MuzzleGuardMod.LOCKED_MUZZLE, renderer(rendererType, true));
-			register.invoke(null, MuzzleGuardMod.COLLAR, renderer(rendererType, false));
-			register.invoke(null, MuzzleGuardMod.LOCKED_COLLAR, renderer(rendererType, false));
-			register.invoke(null, MuzzleGuardMod.LOCKBOX_PHOTO, renderer(rendererType, false));
 		} catch (ReflectiveOperationException exception) {
 			throw new IllegalStateException("Could not register Muzzle Guard Trinket renderers", exception);
 		}

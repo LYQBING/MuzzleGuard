@@ -3,13 +3,13 @@
 	"category": "equipment",
 	"pattern": [
 		"C C",
-		"IDI",
+		"IEI",
 		" I "
 	],
 	"key": {
 		"C": "minecraft:chain",
 		"I": "minecraft:iron_ingot",
-		"D": "minecraft:item_frame"
+		"E": "minecraft:emerald"
 	},
 	"result": {
 		"id": "muzzle_guard:lockbox_photo",
