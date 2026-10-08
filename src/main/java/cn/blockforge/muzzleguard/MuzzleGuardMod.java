@@ -39,7 +39,9 @@ public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
 	private static final String KEY_UUID = "muzzle_guard_key";
 	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
-	private static final String CONTROLLER_TARGET_UUID = "muzzle_guard_controller_target";
+	private static final String COLLAR_UUID = "muzzle_guard_collar";
+	private static final String CONTROLLER_PLAYER_UUID = "muzzle_guard_controller_player";
+	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
 	private static final String LOCKED = "muzzle_guard_locked";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
@@ -333,8 +335,12 @@ public final class MuzzleGuardMod implements ModInitializer {
 		@Override
 		public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent display, Consumer<Text> textConsumer, TooltipType type) {
 			super.appendTooltip(stack, context, display, textConsumer, type);
-			String target = customData(stack).getString(CONTROLLER_TARGET_UUID).orElse("");
-			if (!target.isEmpty()) textConsumer.accept(Text.translatable("tooltip.muzzle_guard.controller_bound", shortId(target)));
+			NbtCompound data = customData(stack);
+			String playerId = data.getString(CONTROLLER_PLAYER_UUID).orElse("");
+			String collarId = data.getString(CONTROLLER_COLLAR_UUID).orElse("");
+			if (!playerId.isEmpty() && !collarId.isEmpty()) {
+				textConsumer.accept(Text.translatable("tooltip.muzzle_guard.controller_bound", shortId(playerId), shortId(collarId)));
+			}
 		}
 
 		@Override
@@ -353,25 +359,90 @@ public final class MuzzleGuardMod implements ModInitializer {
 	}
 
 	private static void useController(ItemStack controller, PlayerEntity user, PlayerEntity selectedPlayer) {
-		NbtCompound data = customData(controller);
-		String targetId = data.getString(CONTROLLER_TARGET_UUID).orElse("");
-		if (targetId.isEmpty()) {
-			if (!isEquipped(selectedPlayer, COLLAR) && !isEquipped(selectedPlayer, LOCKED_COLLAR)) {
+		NbtCompound controllerData = customData(controller);
+		String playerId = controllerData.getString(CONTROLLER_PLAYER_UUID).orElse("");
+		String collarId = controllerData.getString(CONTROLLER_COLLAR_UUID).orElse("");
+		if (playerId.isEmpty() || collarId.isEmpty()) {
+			ItemStack collar = getEquippedCollar(selectedPlayer);
+			if (collar == null) {
 				user.sendMessage(Text.translatable("message.muzzle_guard.controller_no_collar"), false);
 				return;
 			}
-			data.putString(CONTROLLER_TARGET_UUID, selectedPlayer.getUuidAsString());
-			setCustomData(controller, data);
-			user.sendMessage(Text.translatable("message.muzzle_guard.controller_bound", selectedPlayer.getDisplayName()), false);
+			collarId = getOrCreateCollarId(collar);
+			markNecklaceInventoryUpdated(selectedPlayer);
+			controllerData.putString(CONTROLLER_PLAYER_UUID, selectedPlayer.getUuidAsString());
+			controllerData.putString(CONTROLLER_COLLAR_UUID, collarId);
+			setCustomData(controller, controllerData);
+			user.sendMessage(Text.translatable("message.muzzle_guard.controller_bound", selectedPlayer.getDisplayName(), shortId(collarId)), false);
 			return;
 		}
 
-		PlayerEntity target = user.getEntityWorld().getServer().getPlayerManager().getPlayer(UUID.fromString(targetId));
-		if (target == null || (!isEquipped(target, COLLAR) && !isEquipped(target, LOCKED_COLLAR))) {
-			user.sendMessage(Text.translatable("message.muzzle_guard.controller_target_unavailable"), false);
+		PlayerEntity target;
+		try {
+			target = user.getEntityWorld().getServer().getPlayerManager().getPlayer(UUID.fromString(playerId));
+		} catch (IllegalArgumentException exception) {
+			target = null;
+		}
+		if (target == null || !collarId.equals(getEquippedCollarId(target))) {
+			controllerData.remove(CONTROLLER_PLAYER_UUID);
+			controllerData.remove(CONTROLLER_COLLAR_UUID);
+			setCustomData(controller, controllerData);
+			user.sendMessage(Text.translatable("message.muzzle_guard.controller_unbound"), false);
 			return;
 		}
-		target.damage((ServerWorld) user.getEntityWorld(), user.getDamageSources().magic(), 1.0F);
+
+		target.damage((ServerWorld) target.getEntityWorld(), user.getDamageSources().magic(), 1.0F);
+		user.sendMessage(Text.translatable("message.muzzle_guard.controller_shocked", target.getDisplayName()), false);
+		if (!user.getUuid().equals(target.getUuid())) {
+			target.sendMessage(Text.translatable("message.muzzle_guard.controller_shocked_target"), false);
+		}
+	}
+
+	private static ItemStack getEquippedCollar(PlayerEntity player) {
+		try {
+			Map<?, ?> groups = getTrinketInventories(player);
+			Object slots = groups == null ? null : groups.get("chest");
+			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get("necklace") : null;
+			if (inventory == null) return null;
+			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
+			int size = ((Number) invokeApiMethod(inventoryApi, inventory,
+					new String[]{"size", "method_5439"}, new Class<?>[0])).intValue();
+			for (int index = 0; index < size; index++) {
+				ItemStack stack = (ItemStack) invokeApiMethod(inventoryApi, inventory,
+						new String[]{"getStack", "method_5438"}, new Class<?>[]{int.class}, index);
+				if (stack.isOf(COLLAR) || stack.isOf(LOCKED_COLLAR)) return stack;
+			}
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to inspect the player's collar: " + exception);
+		}
+		return null;
+	}
+
+	private static String getEquippedCollarId(PlayerEntity player) {
+		ItemStack collar = getEquippedCollar(player);
+		return collar == null ? "" : customData(collar).getString(COLLAR_UUID).orElse("");
+	}
+
+	private static String getOrCreateCollarId(ItemStack collar) {
+		NbtCompound data = customData(collar);
+		String id = data.getString(COLLAR_UUID).orElse("");
+		if (id.isEmpty()) {
+			id = UUID.randomUUID().toString();
+			data.putString(COLLAR_UUID, id);
+			setCustomData(collar, data);
+		}
+		return id;
+	}
+
+	private static void markNecklaceInventoryUpdated(PlayerEntity player) {
+		try {
+			Map<?, ?> groups = getTrinketInventories(player);
+			Object slots = groups == null ? null : groups.get("chest");
+			Object inventory = slots instanceof Map<?, ?> slotMap ? slotMap.get("necklace") : null;
+			if (inventory != null) Class.forName("dev.emi.trinkets.api.TrinketInventory").getMethod("markUpdate").invoke(inventory);
+		} catch (ReflectiveOperationException exception) {
+			System.err.println("[Muzzle Guard] Failed to sync collar identity: " + exception);
+		}
 	}
 
 	private static boolean isMuzzleEquipped(PlayerEntity player) {
