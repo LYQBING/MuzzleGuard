@@ -119,7 +119,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Registry.register(
-				Registries.CREATIVE_MODE_TAB,
+				BuiltInRegistries.CREATIVE_MODE_TAB,
 				Identifier.fromNamespaceAndPath(MOD_ID, "main"),
 				CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
 					.title(Component.translatable("itemGroup.muzzle_guard"))
