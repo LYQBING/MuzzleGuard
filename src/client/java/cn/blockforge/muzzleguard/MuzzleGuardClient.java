@@ -57,7 +57,7 @@ public final class MuzzleGuardClient implements ClientModInitializer {
 
 	private static void render(ItemStack stack, Object model, MatrixStack matrices,
 			OrderedRenderCommandQueue queue, int light, boolean face) {
-		if (!(model instanceof PlayerEntityModel<?> playerModel)) return;
+		if (!(model instanceof PlayerEntityModel playerModel)) return;
 
 		ModelPart part = face ? playerModel.head : playerModel.body;
 		matrices.push();
