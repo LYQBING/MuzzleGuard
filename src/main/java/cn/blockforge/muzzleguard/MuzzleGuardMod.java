@@ -14,10 +14,13 @@ import java.util.function.Consumer;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.util.ActionResult;
@@ -31,9 +34,12 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
 
 public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
@@ -43,6 +49,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final String CONTROLLER_PLAYER_UUID = "muzzle_guard_controller_player";
 	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
 	private static final String LOCKED = "muzzle_guard_locked";
+	private static final String LEASH_HOLDER_PREFIX = "muzzle_guard:leash_holder:";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
 	private static final Identifier MUZZLE_RENDER_ID = Identifier.of(MOD_ID, "muzzle_render");
@@ -172,8 +179,68 @@ public final class MuzzleGuardMod implements ModInitializer {
 			);
 			return false;
 		});
+		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+			if (!(entity instanceof PlayerEntity target) || !player.getStackInHand(hand).isOf(Items.LEAD)) {
+				return ActionResult.PASS;
+			}
+			if (world.isClient) return ActionResult.SUCCESS;
+			return useLeadOnPlayer(player, target);
+		});
+		ServerTickEvents.END_SERVER_TICK.register(MuzzleGuardMod::tickLeashedPlayers);
 		registerTrinketRules();
 		registerAnimationBlocker();
+	}
+
+	private static ActionResult useLeadOnPlayer(PlayerEntity holder, PlayerEntity target) {
+		if (holder == target) return ActionResult.SUCCESS;
+		if (getEquippedCollar(target) == null) {
+			holder.sendMessage(Text.translatable("message.muzzle_guard.leash_requires_collar"), false);
+			return ActionResult.SUCCESS;
+		}
+
+		UUID currentHolder = getLeashHolderId(target);
+		if (currentHolder != null) {
+			if (currentHolder.equals(holder.getUuid())) {
+				target.removeCommandTag(leashTag(currentHolder));
+				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_released", target.getDisplayName()), false);
+				target.sendMessage(Text.translatable("message.muzzle_guard.leash_released_target", holder.getDisplayName()), false);
+			} else {
+				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_already_attached"), false);
+			}
+			return ActionResult.SUCCESS;
+		}
+
+		if (getLeashHolderId(holder) != null) {
+			holder.sendMessage(Text.translatable("message.muzzle_guard.leash_cannot_lead_while_leashed"), false);
+			return ActionResult.SUCCESS;
+		}
+		for (ServerPlayerEntity online : holder.getEntityWorld().getServer().getPlayerManager().getPlayerList()) {
+			if (!online.getUuid().equals(target.getUuid()) && holder.getUuid().equals(getLeashHolderId(online))) {
+				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_already_leading"), false);
+				return ActionResult.SUCCESS;
+			}
+		}
+
+		target.addCommandTag(leashTag(holder.getUuid()));
+		holder.sendMessage(Text.translatable("message.muzzle_guard.leash_attached", target.getDisplayName()), false);
+		target.sendMessage(Text.translatable("message.muzzle_guard.leash_attached_target", holder.getDisplayName()), false);
+		return ActionResult.SUCCESS;
+	}
+
+	private static String leashTag(UUID holderId) {
+		return LEASH_HOLDER_PREFIX + holderId;
+	}
+
+	private static UUID getLeashHolderId(PlayerEntity target) {
+		for (String tag : target.getCommandTags()) {
+			if (!tag.startsWith(LEASH_HOLDER_PREFIX)) continue;
+			try {
+				return UUID.fromString(tag.substring(LEASH_HOLDER_PREFIX.length()));
+			} catch (IllegalArgumentException ignored) {
+				target.removeCommandTag(tag);
+			}
+		}
+		return null;
 	}
 
 	private static boolean isMuffledSyllable(int codePoint) {
@@ -181,6 +248,34 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (syllable.codePointAt(0) == codePoint) return true;
 		}
 		return false;
+	}
+
+	private static void tickLeashedPlayers(MinecraftServer server) {
+		for (ServerPlayerEntity target : server.getPlayerManager().getPlayerList()) {
+			UUID holderId = getLeashHolderId(target);
+			if (holderId == null) continue;
+
+			ServerPlayerEntity holder = server.getPlayerManager().getPlayer(holderId);
+			if (holder == null) continue;
+			if (target == holder || !target.getEntityWorld().getRegistryKey().equals(holder.getEntityWorld().getRegistryKey())
+					|| getEquippedCollar(target) == null) {
+				target.removeCommandTag(leashTag(holderId));
+				target.sendMessage(Text.translatable("message.muzzle_guard.leash_auto_released"), false);
+				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_auto_released_holder", target.getDisplayName()), false);
+				continue;
+			}
+
+			double distance = target.getPos().distanceTo(holder.getPos());
+			if (distance > 12.0) {
+				target.removeCommandTag(leashTag(holderId));
+				target.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far"), false);
+				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far_holder", target.getDisplayName()), false);
+			} else if (distance > 2.5) {
+				Vec3d pull = holder.getPos().subtract(target.getPos()).normalize();
+				double strength = Math.min(0.35, (distance - 2.0) * 0.08);
+				target.addVelocity(pull.multiply(strength));
+			}
+		}
 	}
 
 	private static boolean removeLockBinding(PlayerEntity actor, PlayerEntity target) {
