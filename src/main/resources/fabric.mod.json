@@ -8,6 +8,9 @@
 	"entrypoints": {
 		"main": [
 			"cn.blockforge.muzzleguard.MuzzleGuardMod"
+		],
+		"client": [
+			"cn.blockforge.muzzleguard.MuzzleGuardClient"
 		]
 	},
 	"depends": {
