@@ -65,7 +65,8 @@ public final class MuzzleGuardClient implements ClientModInitializer {
 
 		ItemRenderState itemState = new ItemRenderState();
 		MinecraftClient.getInstance().getItemModelManager().clearAndUpdate(
-				itemState, stack, ItemDisplayContext.NONE, null, null, stack.hashCode());
+				itemState, face ? new ItemStack(MuzzleGuardMod.MUZZLE_RENDER) : stack,
+				ItemDisplayContext.NONE, null, null, stack.hashCode());
 		itemState.render(matrices, queue, light, 0, 0);
 		matrices.pop();
 	}
