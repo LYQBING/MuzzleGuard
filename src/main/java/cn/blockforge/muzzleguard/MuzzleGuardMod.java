@@ -183,7 +183,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (!(entity instanceof PlayerEntity target) || !player.getStackInHand(hand).isOf(Items.LEAD)) {
 				return ActionResult.PASS;
 			}
-			if (world.isClient) return ActionResult.SUCCESS;
+			if (world.isClient()) return ActionResult.SUCCESS;
 			return useLeadOnPlayer(player, target);
 		});
 		ServerTickEvents.END_SERVER_TICK.register(MuzzleGuardMod::tickLeashedPlayers);
@@ -265,13 +265,13 @@ public final class MuzzleGuardMod implements ModInitializer {
 				continue;
 			}
 
-			double distance = target.getPos().distanceTo(holder.getPos());
+			double distance = Math.sqrt(target.squaredDistanceTo(holder));
 			if (distance > 12.0) {
 				target.removeCommandTag(leashTag(holderId));
 				target.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far"), false);
 				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far_holder", target.getDisplayName()), false);
 			} else if (distance > 2.5) {
-				Vec3d pull = holder.getPos().subtract(target.getPos()).normalize();
+				Vec3d pull = new Vec3d(holder.getX() - target.getX(), holder.getY() - target.getY(), holder.getZ() - target.getZ()).normalize();
 				double strength = Math.min(0.35, (distance - 2.0) * 0.08);
 				target.addVelocity(pull.multiply(strength));
 			}
