@@ -2,7 +2,7 @@
 
 ## 自定义口球贴图
 
-将工作区根目录的 `123.png` 放入 `src/main/resources/assets/muzzle_guard/textures/entity/equipment/humanoid/muzzle.png` 并提交，重新运行 GitHub Actions 构建并下载 `muzzle-guard` 构建产物，即可使用该口球贴图。资源包也可通过 `assets/muzzle_guard/textures/entity/equipment/humanoid/muzzle.png` 覆盖该贴图。
+玩家佩戴口球后的面部模型使用 `src/main/resources/assets/muzzle_guard/textures/item/muzzle_face.png`。该贴图来自工作区根目录的 `123.png`，与背包口球图标 `textures/item/muzzle.png` 分开。资源包覆盖路径为 `assets/muzzle_guard/textures/item/muzzle_face.png`。
 
 ## GitHub Actions 构建
 
