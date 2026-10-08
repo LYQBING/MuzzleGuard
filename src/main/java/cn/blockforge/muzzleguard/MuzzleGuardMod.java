@@ -259,7 +259,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			ServerPlayerEntity holder = server.getPlayerManager().getPlayer(holderId);
 			if (holder == null) continue;
 			if (target == holder || !target.getEntityWorld().getRegistryKey().equals(holder.getEntityWorld().getRegistryKey())
-					|| getEquippedCollar(target) == null) {
+					) {
 				target.removeCommandTag(leashTag(holderId));
 				target.sendMessage(Text.translatable("message.muzzle_guard.leash_auto_released"), false);
 				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_auto_released_holder", target.getDisplayName()), false);
@@ -267,25 +267,19 @@ public final class MuzzleGuardMod implements ModInitializer {
 			}
 
 			double distance = Math.sqrt(target.squaredDistanceTo(holder));
-			if (distance > 12.0) {
-				target.removeCommandTag(leashTag(holderId));
-				target.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far"), false);
-				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far_holder", target.getDisplayName()), false);
-			} else {
-				Vec3d targetAnchor = new Vec3d(target.getX(), target.getY() + 1.1, target.getZ());
-				Vec3d holderAnchor = new Vec3d(holder.getX(), holder.getY() + 1.1, holder.getZ());
-				Vec3d tether = holderAnchor.subtract(targetAnchor);
-				int segments = Math.max(1, (int) (distance * 3.0));
-				ServerWorld world = (ServerWorld) target.getEntityWorld();
-				for (int segment = 0; segment <= segments; segment++) {
-					Vec3d point = targetAnchor.add(tether.multiply((double) segment / segments));
-					world.spawnParticles(ParticleTypes.END_ROD, point.x, point.y, point.z, 1, 0.0, 0.0, 0.0, 0.0);
-				}
-				if (distance > 2.5) {
-					Vec3d pull = tether.normalize();
-					double strength = Math.min(0.35, (distance - 2.0) * 0.08);
-					target.addVelocity(pull.multiply(strength));
-				}
+			Vec3d targetAnchor = new Vec3d(target.getX(), target.getY() + 1.1, target.getZ());
+			Vec3d holderAnchor = new Vec3d(holder.getX(), holder.getY() + 1.1, holder.getZ());
+			Vec3d tether = holderAnchor.subtract(targetAnchor);
+			int segments = Math.max(1, (int) (distance * 3.0));
+			ServerWorld world = (ServerWorld) target.getEntityWorld();
+			for (int segment = 0; segment <= segments; segment++) {
+				Vec3d point = targetAnchor.add(tether.multiply((double) segment / segments));
+				world.spawnParticles(ParticleTypes.END_ROD, point.x, point.y, point.z, 1, 0.0, 0.0, 0.0, 0.0);
+			}
+			if (distance > 2.5) {
+				Vec3d pull = tether.normalize();
+				double strength = Math.min(0.35, (distance - 2.0) * 0.08);
+				target.addVelocity(pull.multiply(strength));
 			}
 		}
 	}
