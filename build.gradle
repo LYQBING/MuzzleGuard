@@ -17,7 +17,6 @@ repositories {
 
 loom {
 	splitEnvironmentSourceSets()
-	noIntermediateMappings()
 	mods {
 		muzzle_guard {
 			sourceSet sourceSets.main
