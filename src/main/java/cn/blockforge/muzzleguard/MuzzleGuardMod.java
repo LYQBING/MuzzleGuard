@@ -22,6 +22,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -183,7 +184,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (!(entity instanceof PlayerEntity target) || !player.getStackInHand(hand).isOf(Items.LEAD)) {
 				return ActionResult.PASS;
 			}
-			if (world.isClient()) return ActionResult.SUCCESS;
+			if (world.isClient()) return ActionResult.PASS;
 			return useLeadOnPlayer(player, target);
 		});
 		ServerTickEvents.END_SERVER_TICK.register(MuzzleGuardMod::tickLeashedPlayers);
@@ -270,10 +271,21 @@ public final class MuzzleGuardMod implements ModInitializer {
 				target.removeCommandTag(leashTag(holderId));
 				target.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far"), false);
 				holder.sendMessage(Text.translatable("message.muzzle_guard.leash_too_far_holder", target.getDisplayName()), false);
-			} else if (distance > 2.5) {
-				Vec3d pull = new Vec3d(holder.getX() - target.getX(), holder.getY() - target.getY(), holder.getZ() - target.getZ()).normalize();
-				double strength = Math.min(0.35, (distance - 2.0) * 0.08);
-				target.addVelocity(pull.multiply(strength));
+			} else {
+				Vec3d targetAnchor = new Vec3d(target.getX(), target.getY() + 1.1, target.getZ());
+				Vec3d holderAnchor = new Vec3d(holder.getX(), holder.getY() + 1.1, holder.getZ());
+				Vec3d tether = holderAnchor.subtract(targetAnchor);
+				int segments = Math.max(1, (int) (distance * 3.0));
+				ServerWorld world = target.getServerWorld();
+				for (int segment = 0; segment <= segments; segment++) {
+					Vec3d point = targetAnchor.add(tether.multiply((double) segment / segments));
+					world.spawnParticles(ParticleTypes.END_ROD, point.x, point.y, point.z, 1, 0.0, 0.0, 0.0, 0.0);
+				}
+				if (distance > 2.5) {
+					Vec3d pull = tether.normalize();
+					double strength = Math.min(0.35, (distance - 2.0) * 0.08);
+					target.addVelocity(pull.multiply(strength));
+				}
 			}
 		}
 	}
