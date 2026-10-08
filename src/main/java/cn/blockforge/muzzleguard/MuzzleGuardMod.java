@@ -276,7 +276,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 				Vec3d holderAnchor = new Vec3d(holder.getX(), holder.getY() + 1.1, holder.getZ());
 				Vec3d tether = holderAnchor.subtract(targetAnchor);
 				int segments = Math.max(1, (int) (distance * 3.0));
-				ServerWorld world = target.getServerWorld();
+				ServerWorld world = (ServerWorld) target.getEntityWorld();
 				for (int segment = 0; segment <= segments; segment++) {
 					Vec3d point = targetAnchor.add(tether.multiply((double) segment / segments));
 					world.spawnParticles(ParticleTypes.END_ROD, point.x, point.y, point.z, 1, 0.0, 0.0, 0.0, 0.0);
