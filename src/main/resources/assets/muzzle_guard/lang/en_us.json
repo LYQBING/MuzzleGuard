@@ -28,6 +28,12 @@
 	"message.muzzle_guard.master_key_unlocked": "The master key removed the binding and unlocked the trinket.",
 	"item.muzzle_guard.master_key": "Master Key",
 	"item.muzzle_guard.master_key.desc": "Administrator tool: removes a padlocked trinket's binding and unlocks it.",
+	"item.muzzle_guard.shock_controller": "Shock Controller",
+	"item.muzzle_guard.shock_controller.desc": "Right-click a player wearing a collar to bind; each later use deals 1 damage to them.",
+	"tooltip.muzzle_guard.controller_bound": "Bound wearer: %s",
+	"message.muzzle_guard.controller_no_collar": "The target is not wearing a collar or padlocked collar.",
+	"message.muzzle_guard.controller_bound": "The shock controller is now bound to %s.",
+	"message.muzzle_guard.controller_target_unavailable": "The bound player is offline or is no longer wearing a collar.",
 	"item.muzzle_guard.lockbox_photo": "Keepsake Necklace",
 	"item.muzzle_guard.lockbox_photo.desc": "A keepsake of a cherished bond, refusing to break the promise between you.",
 	"itemGroup.muzzle_guard": "Gags and Collars"

@@ -39,6 +39,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	public static final String MOD_ID = "muzzle_guard";
 	private static final String KEY_UUID = "muzzle_guard_key";
 	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
+	private static final String CONTROLLER_TARGET_UUID = "muzzle_guard_controller_target";
 	private static final String LOCKED = "muzzle_guard_locked";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
 	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
@@ -47,12 +48,20 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.of(MOD_ID, "locked_collar");
 	private static final Identifier KEY_ID = Identifier.of(MOD_ID, "key");
 	private static final Identifier MASTER_KEY_ID = Identifier.of(MOD_ID, "master_key");
+	private static final Identifier SHOCK_CONTROLLER_ID = Identifier.of(MOD_ID, "shock_controller");
 	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
 	public static final Item LOCKBOX_PHOTO = Registry.register(
 			Registries.ITEM,
 			LOCKBOX_PHOTO_ID,
 			new Item(new Item.Settings()
 					.registryKey(RegistryKey.of(RegistryKeys.ITEM, LOCKBOX_PHOTO_ID))
+					.maxCount(1))
+	);
+	public static final Item SHOCK_CONTROLLER = Registry.register(
+			Registries.ITEM,
+			SHOCK_CONTROLLER_ID,
+			new ShockControllerItem(new Item.Settings()
+					.registryKey(RegistryKey.of(RegistryKeys.ITEM, SHOCK_CONTROLLER_ID))
 					.maxCount(1))
 	);
 	public static final Item MUZZLE = Registry.register(
@@ -118,6 +127,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 							entries.add(LOCKED_COLLAR);
 							entries.add(KEY);
 							entries.add(MASTER_KEY);
+							entries.add(SHOCK_CONTROLLER);
 							entries.add(LOCKBOX_PHOTO);
 						})
 						.build()
@@ -165,12 +175,12 @@ public final class MuzzleGuardMod implements ModInitializer {
 		return false;
 	}
 
-	private static void removeLockBinding(PlayerEntity actor, PlayerEntity target) {
+	private static boolean removeLockBinding(PlayerEntity actor, PlayerEntity target) {
 		try {
 			Map<?, ?> groups = getTrinketInventories(target);
 			if (groups == null) {
 				actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_trinkets"), false);
-				return;
+				return false;
 			}
 			Class<?> inventoryApi = Class.forName("dev.emi.trinkets.api.TrinketInventory");
 			for (String[] slotPath : new String[][]{{"head", "face"}, {"chest", "necklace"}}) {
@@ -191,14 +201,16 @@ public final class MuzzleGuardMod implements ModInitializer {
 					Text result = Text.translatable("message.muzzle_guard.master_key_unlocked");
 					actor.sendMessage(result, false);
 					if (!actor.getUuid().equals(target.getUuid())) target.sendMessage(result, false);
-					return;
+					return true;
 				}
 			}
 			actor.sendMessage(Text.translatable("message.muzzle_guard.key_no_target"), false);
+			return false;
 		} catch (ReflectiveOperationException exception) {
 			System.err.println("[Muzzle Guard] Failed to remove Trinket lock binding:");
 			exception.printStackTrace(System.err);
 			actor.sendMessage(Text.translatable("message.muzzle_guard.key_error"), false);
+			return false;
 		}
 	}
 
@@ -295,17 +307,71 @@ public final class MuzzleGuardMod implements ModInitializer {
 
 		@Override
 		public ActionResult use(World world, PlayerEntity user, Hand hand) {
-			if (!world.isClient()) removeLockBinding(user, user);
+			if (!world.isClient() && removeLockBinding(user, user)) consumeIfSurvival(user, hand);
+			return ActionResult.SUCCESS;
+		}
+
+		@Override
+		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
+			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target
+					&& removeLockBinding(user, target)) {
+				consumeIfSurvival(user, hand);
+			}
+			return ActionResult.SUCCESS;
+		}
+
+		private static void consumeIfSurvival(PlayerEntity user, Hand hand) {
+			if (!user.getAbilities().creativeMode) user.getStackInHand(hand).decrement(1);
+		}
+	}
+
+	private static final class ShockControllerItem extends Item {
+		private ShockControllerItem(Settings settings) {
+			super(settings);
+		}
+
+		@Override
+		public void appendTooltip(ItemStack stack, Item.TooltipContext context, TooltipDisplayComponent display, Consumer<Text> textConsumer, TooltipType type) {
+			super.appendTooltip(stack, context, display, textConsumer, type);
+			String target = customData(stack).getString(CONTROLLER_TARGET_UUID).orElse("");
+			if (!target.isEmpty()) textConsumer.accept(Text.translatable("tooltip.muzzle_guard.controller_bound", shortId(target)));
+		}
+
+		@Override
+		public ActionResult use(World world, PlayerEntity user, Hand hand) {
+			if (!world.isClient()) useController(user.getStackInHand(hand), user, user);
 			return ActionResult.SUCCESS;
 		}
 
 		@Override
 		public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
 			if (!user.getEntityWorld().isClient() && entity instanceof PlayerEntity target) {
-				removeLockBinding(user, target);
+				useController(user.getStackInHand(hand), user, target);
 			}
 			return ActionResult.SUCCESS;
 		}
+	}
+
+	private static void useController(ItemStack controller, PlayerEntity user, PlayerEntity selectedPlayer) {
+		NbtCompound data = customData(controller);
+		String targetId = data.getString(CONTROLLER_TARGET_UUID).orElse("");
+		if (targetId.isEmpty()) {
+			if (!isEquipped(selectedPlayer, COLLAR) && !isEquipped(selectedPlayer, LOCKED_COLLAR)) {
+				user.sendMessage(Text.translatable("message.muzzle_guard.controller_no_collar"), false);
+				return;
+			}
+			data.putString(CONTROLLER_TARGET_UUID, selectedPlayer.getUuidAsString());
+			setCustomData(controller, data);
+			user.sendMessage(Text.translatable("message.muzzle_guard.controller_bound", selectedPlayer.getDisplayName()), false);
+			return;
+		}
+
+		PlayerEntity target = user.getEntityWorld().getServer().getPlayerManager().getPlayer(UUID.fromString(targetId));
+		if (target == null || (!isEquipped(target, COLLAR) && !isEquipped(target, LOCKED_COLLAR))) {
+			user.sendMessage(Text.translatable("message.muzzle_guard.controller_target_unavailable"), false);
+			return;
+		}
+		target.damage((ServerWorld) user.getEntityWorld(), user.getDamageSources().magic(), 1.0F);
 	}
 
 	private static boolean isMuzzleEquipped(PlayerEntity player) {
