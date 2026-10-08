@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
@@ -26,6 +25,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
@@ -49,29 +49,29 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
 	private static final String LOCKED = "muzzle_guard_locked";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
-	private static final Identifier MUZZLE_ID = Identifier.of(MOD_ID, "muzzle");
-	private static final Identifier MUZZLE_RENDER_ID = Identifier.of(MOD_ID, "muzzle_render");
-	private static final Identifier LOCKED_MUZZLE_ID = Identifier.of(MOD_ID, "locked_muzzle");
-	private static final Identifier COLLAR_ID = Identifier.of(MOD_ID, "collar");
-	private static final Identifier LOCKED_COLLAR_ID = Identifier.of(MOD_ID, "locked_collar");
-	private static final Identifier KEY_ID = Identifier.of(MOD_ID, "key");
-	private static final Identifier MASTER_KEY_ID = Identifier.of(MOD_ID, "master_key");
-	private static final Identifier SHOCK_CONTROLLER_ID = Identifier.of(MOD_ID, "shock_controller");
-	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.of(MOD_ID, "lockbox_photo");
+	private static final Identifier MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "muzzle");
+	private static final Identifier MUZZLE_RENDER_ID = Identifier.fromNamespaceAndPath(MOD_ID, "muzzle_render");
+	private static final Identifier LOCKED_MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_muzzle");
+	private static final Identifier COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "collar");
+	private static final Identifier LOCKED_COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_collar");
+	private static final Identifier KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "key");
+	private static final Identifier MASTER_KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "master_key");
+	private static final Identifier SHOCK_CONTROLLER_ID = Identifier.fromNamespaceAndPath(MOD_ID, "shock_controller");
+	private static final Identifier LOCKBOX_PHOTO_ID = Identifier.fromNamespaceAndPath(MOD_ID, "lockbox_photo");
 	public static final Item LOCKBOX_PHOTO = Registry.register(
 			BuiltInRegistries.ITEM,
 			LOCKBOX_PHOTO_ID,
 			new Item(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, LOCKBOX_PHOTO_ID))
 					.component(TrinketDataComponents.EQUIPMENT, TrinketEquippable.DEFAULT.withSlots("chest/necklace"))
-					.maxCount(1))
+					.stacksTo(1))
 	);
 	public static final Item SHOCK_CONTROLLER = Registry.register(
 			BuiltInRegistries.ITEM,
 			SHOCK_CONTROLLER_ID,
 			new ShockControllerItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, SHOCK_CONTROLLER_ID))
-					.maxCount(1))
+					.stacksTo(1))
 	);
 	public static final Item MUZZLE = Registry.register(
 			BuiltInRegistries.ITEM,
@@ -79,12 +79,12 @@ public final class MuzzleGuardMod implements ModInitializer {
 			new WearableItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, MUZZLE_ID))
 					.component(TrinketDataComponents.EQUIPMENT, TrinketEquippable.DEFAULT.withSlots("head/face"))
-					.maxCount(1), "head", "face")
+					.stacksTo(1), "head", "face")
 	);
 	public static final Item MUZZLE_RENDER = Registry.register(
 			BuiltInRegistries.ITEM,
 			MUZZLE_RENDER_ID,
-			new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, MUZZLE_RENDER_ID)).maxCount(1))
+			new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, MUZZLE_RENDER_ID)).stacksTo(1))
 	);
 	public static final Item LOCKED_MUZZLE = registerWearable(LOCKED_MUZZLE_ID, "head", "face");
 	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
@@ -94,14 +94,14 @@ public final class MuzzleGuardMod implements ModInitializer {
 			KEY_ID,
 			new KeyItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, KEY_ID))
-					.maxCount(1))
+					.stacksTo(1))
 	);
 	public static final Item MASTER_KEY = Registry.register(
 			BuiltInRegistries.ITEM,
 			MASTER_KEY_ID,
 			new MasterKeyItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, MASTER_KEY_ID))
-					.maxCount(1))
+					.stacksTo(1))
 	);
 
 	private static Item registerWearable(Identifier id, String group, String slot) {
@@ -112,7 +112,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 						.setId(ResourceKey.create(Registries.ITEM, id))
 						.component(TrinketDataComponents.EQUIPMENT,
 								TrinketEquippable.DEFAULT.withSlots(group + "/" + slot))
-						.maxCount(1), group, slot)
+						.stacksTo(1), group, slot)
 		);
 	}
 
@@ -120,19 +120,19 @@ public final class MuzzleGuardMod implements ModInitializer {
 	public void onInitialize() {
 		Registry.register(
 				Registries.CREATIVE_MODE_TAB,
-				Identifier.of(MOD_ID, "main"),
-				FabricItemGroup.builder()
-					.displayName(Component.translatable("itemGroup.muzzle_guard"))
+				Identifier.fromNamespaceAndPath(MOD_ID, "main"),
+				CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+					.title(Component.translatable("itemGroup.muzzle_guard"))
 						.icon(() -> new ItemStack(MUZZLE))
-						.entries((context, entries) -> {
-							entries.add(MUZZLE);
-							entries.add(LOCKED_MUZZLE);
-							entries.add(COLLAR);
-							entries.add(LOCKED_COLLAR);
-							entries.add(KEY);
-							entries.add(MASTER_KEY);
-							entries.add(SHOCK_CONTROLLER);
-							entries.add(LOCKBOX_PHOTO);
+						.displayItems((context, entries) -> {
+							entries.accept(MUZZLE);
+							entries.accept(LOCKED_MUZZLE);
+							entries.accept(COLLAR);
+							entries.accept(LOCKED_COLLAR);
+							entries.accept(KEY);
+							entries.accept(MASTER_KEY);
+							entries.accept(SHOCK_CONTROLLER);
+							entries.accept(LOCKBOX_PHOTO);
 						})
 						.build()
 		);
@@ -141,7 +141,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 				return true;
 			}
 
-			String content = message.getContent().getString();
+			String content = message.signedContent();
 			int[] codePoints = content.codePoints().toArray();
 			boolean onlyMuffledSpeech = true;
 			for (int codePoint : codePoints) {
@@ -182,7 +182,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 			if (inventory == null) continue;
 			for (int index = 0; index < inventory.getContainerSize(); index++) {
 				ItemStack worn = inventory.getItem(index);
-				if (worn.isEmpty() || !(worn.isOf(LOCKED_COLLAR) || worn.isOf(LOCKED_MUZZLE))) continue;
+				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_MUZZLE))) continue;
 				CompoundTag data = customData(worn);
 				data.remove(BOUND_KEY_UUID);
 				data.remove(LOCKED);
@@ -348,7 +348,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 				user.sendSystemMessage(Component.translatable("message.muzzle_guard.controller_no_collar"));
 				return;
 			}
-			if (collar.isOf(LOCKED_COLLAR) && customData(collar).getBoolean(LOCKED).orElse(false)
+			if (collar.is(LOCKED_COLLAR) && customData(collar).getBoolean(LOCKED).orElse(false)
 					&& !hasMatchingKey(user, customData(collar).getString(BOUND_KEY_UUID).orElse(""))) {
 				user.sendSystemMessage(Component.translatable("message.muzzle_guard.controller_collar_locked"));
 				return;
@@ -387,11 +387,11 @@ public final class MuzzleGuardMod implements ModInitializer {
 		if (boundKeyId.isEmpty()) return false;
 		for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
 			ItemStack stack = player.getInventory().getItem(slot);
-			if (stack.isOf(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
+			if (stack.is(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
 		}
 		for (InteractionHand hand : InteractionHand.values()) {
 			ItemStack stack = player.getItemInHand(hand);
-			if (stack.isOf(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
+			if (stack.is(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
 		}
 		return false;
 	}
@@ -402,7 +402,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 		if (inventory == null) return null;
 		for (int index = 0; index < inventory.getContainerSize(); index++) {
 			ItemStack stack = inventory.getItem(index);
-			if (stack.isOf(COLLAR) || stack.isOf(LOCKED_COLLAR)) return stack;
+			if (stack.is(COLLAR) || stack.is(LOCKED_COLLAR)) return stack;
 		}
 		return null;
 	}
@@ -501,7 +501,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	}
 
 	private static boolean isLockableTrinket(ItemStack stack) {
-		return !stack.isEmpty() && (stack.isOf(LOCKED_MUZZLE) || stack.isOf(LOCKED_COLLAR));
+		return !stack.isEmpty() && (stack.is(LOCKED_MUZZLE) || stack.is(LOCKED_COLLAR));
 	}
 
 	private static final class LockCandidate {
@@ -545,7 +545,7 @@ public final class MuzzleGuardMod implements ModInitializer {
 	private static void registerTrinketRules() {
 		// Register rule to prevent unequipping when locked
 		TrinketCanUnequipCallback.EVENT.register((stack, slot, entity, canUnequipDefault) -> {
-			if (stack.isOf(LOCKED_MUZZLE) || stack.isOf(LOCKED_COLLAR)) {
+			if (stack.is(LOCKED_MUZZLE) || stack.is(LOCKED_COLLAR)) {
 				return customData(stack).getBoolean(LOCKED).orElse(false) ? TriState.FALSE : TriState.DEFAULT;
 			}
 			return TriState.DEFAULT;
