@@ -15,10 +15,11 @@
 	},
 	"depends": {
 		"fabricloader": ">=0.19.5",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"minecraft": "26.3",
+		"java": ">=25",
 		"fabric-api": "*",
 		"needsofnature": "*",
-		"trinkets": "*"
+		"trinkets_updated": "=4.2.1+26.3",
+		"geckolib": ">=5.5.7 <6"
 	}
 }

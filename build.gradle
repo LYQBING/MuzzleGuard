@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.13.6'
+	id 'fabric-loom' version '1.17.21'
 }
 
 version = project.mod_version
@@ -11,6 +11,7 @@ base {
 
 repositories {
 	maven { url = 'https://maven.fabricmc.net/' }
+	maven { url = 'https://maven.nucleoid.xyz' }
 	mavenCentral()
 }
 
@@ -26,9 +27,10 @@ loom {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation "eu.pb4:trinkets:4.2.1+26.3"
 }
 
 processResources {
@@ -39,7 +41,7 @@ processResources {
 }
 
 java {
-	toolchain.languageVersion = JavaLanguageVersion.of(21)
+	toolchain.languageVersion = JavaLanguageVersion.of(25)
 	withSourcesJar()
 }
 

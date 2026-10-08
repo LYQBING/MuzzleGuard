@@ -17,22 +17,25 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.14.3'
+          gradle-version: '9.2.1'
 
       - name: Build
         run: gradle clean build --no-daemon
 
       - name: Verify required mod resources
         run: |
-          jar tf build/libs/muzzle-guard-1.0.14.jar | grep -Fx 'assets/muzzle_guard/textures/item/muzzle_face.png'
-          jar tf build/libs/muzzle-guard-1.0.14.jar | grep -Fx 'data/muzzle_guard/recipe/lockbox_photo.json'
+          jar_file=$(find build/libs -maxdepth 1 -name 'muzzle-guard-*.jar' ! -name '*sources.jar' | head -n 1)
+          test -n "$jar_file"
+          jar tf "$jar_file" | grep -Fx 'assets/muzzle_guard/textures/item/muzzle_face.png'
+          jar tf "$jar_file" | grep -Fx 'data/muzzle_guard/recipe/lockbox_photo.json'
+          jar tf "$jar_file" | grep -Fx 'pack.mcmeta'
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
         with:
-          name: muzzle-guard-1.0.14
-          path: build/libs/muzzle-guard-1.0.14.jar
+          name: muzzle-guard-1.0.15
+          path: build/libs/muzzle-guard-1.0.15.jar
