@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "muzzle_guard",
+	"version": "${version}",
+	"name": "Muzzle Guard (Needs of Nature Addon)",
+	"description": "Face gags, collars, and key-bound padlocks for Trinkets, with Needs of Nature animation protection.",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"cn.blockforge.muzzleguard.MuzzleGuardMod"
+		],
+		"client": [
+			"cn.blockforge.muzzleguard.MuzzleGuardClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*",
+		"needsofnature": "*",
+		"trinkets": "*"
+	}
+}

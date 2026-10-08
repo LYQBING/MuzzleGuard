@@ -1,0 +1,9 @@
+{
+	"layers": {
+		"humanoid": [
+			{
+				"texture": "muzzle_guard:entity/equipment/humanoid/muzzle"
+			}
+		]
+	}
+}

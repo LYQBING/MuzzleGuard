@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "equipment",
+	"pattern": [
+		" I ",
+		"IMI",
+		" I "
+	],
+	"key": {
+		"I": "minecraft:iron_ingot",
+		"M": "muzzle_guard:muzzle"
+	},
+	"result": {
+		"id": "muzzle_guard:locked_muzzle",
+		"count": 1
+	}
+}
