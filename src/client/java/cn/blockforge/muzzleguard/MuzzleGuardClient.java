@@ -13,6 +13,7 @@ import eu.pb4.trinkets.api.client.TrinketRendererRegistry;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 
 public final class MuzzleGuardClient implements ClientModInitializer {
 	@Override
@@ -30,7 +31,7 @@ public final class MuzzleGuardClient implements ClientModInitializer {
 			poseStack.pushPose();
 			part.translateAndRotate(poseStack);
 			poseStack.translate(0.0F, face ? 0.0F : -0.32F, face ? -0.24F : -0.13F);
-			poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+			poseStack.mulPose(new Matrix4f().rotation(Axis.YP.rotationDegrees(180.0F)));
 			poseStack.scale(face ? 0.5F : 0.62F, face ? 0.5F : 0.42F, 0.35F);
 
 			ItemStackRenderState itemState = new ItemStackRenderState();
