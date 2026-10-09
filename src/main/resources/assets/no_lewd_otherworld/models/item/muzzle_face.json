@@ -1,16 +1,6 @@
 {
+	"parent": "minecraft:item/generated",
 	"textures": {
-		"face": "no_lewd_otherworld:item/muzzle_face",
-		"particle": "no_lewd_otherworld:item/muzzle_face"
-	},
-	"elements": [
-		{
-			"from": [-8, -16, 7.5],
-			"to": [8, 0, 8.5],
-			"faces": {
-				"north": {"uv": [0, 0, 16, 16], "texture": "#face"},
-				"south": {"uv": [0, 0, 16, 16], "texture": "#face"}
-			}
-		}
-	]
+		"layer0": "no_lewd_otherworld:item/muzzle_face"
+	}
 }
