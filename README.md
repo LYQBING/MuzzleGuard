@@ -2,7 +2,7 @@
 
 ## 自定义口球贴图
 
-玩家佩戴口球后的面部模型使用 `src/main/resources/assets/no_lewd_otherworld/textures/item/muzzle_face.png`。该贴图来自工作区根目录的 `123.png`，与背包口球图标 `textures/item/muzzle.png` 分开。资源包覆盖路径为 `assets/no_lewd_otherworld/textures/item/muzzle_face.png`。
+玩家佩戴口球后的面部模型使用 `src/main/resources/assets/no_lewd_otherworld/textures/item/muzzle/muzzle_face.png`。该贴图来自工作区根目录的 `123.png`，与背包口球图标 `textures/item/muzzle/muzzle.png` 分开。资源包覆盖路径为 `assets/no_lewd_otherworld/textures/item/muzzle/muzzle_face.png`。
 
 ## GitHub Actions 构建
 

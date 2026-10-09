@@ -28,7 +28,7 @@ public final class NoLewdOtherworldClient implements ClientModInitializer {
 			ModelPart part = face ? playerModel.head : playerModel.body;
 			poseStack.pushPose();
 			part.translateAndRotate(poseStack);
-			poseStack.translate(0.0F, face ? 0.0F : -0.32F, face ? -0.24F : -0.13F);
+			poseStack.translate(0.0F, face ? -0.0625F : 0.0F, face ? -0.24F : -0.13F);
 			poseStack.mulPose(new Matrix4f().rotation(Axis.YP.rotationDegrees(180.0F)));
 			poseStack.scale(face ? 0.5F : 0.62F, face ? 0.5F : 0.42F, 0.35F);
 

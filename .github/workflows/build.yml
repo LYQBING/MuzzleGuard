@@ -30,7 +30,7 @@ jobs:
         run: |
           jar_file=$(find build/libs -maxdepth 1 -name 'no-lewd-otherworld-*.jar' ! -name '*sources.jar' | head -n 1)
           test -n "$jar_file"
-          jar tf "$jar_file" | grep -Fx 'assets/no_lewd_otherworld/textures/item/muzzle_face.png'
+          jar tf "$jar_file" | grep -Fx 'assets/no_lewd_otherworld/textures/item/muzzle/muzzle_face.png'
           jar tf "$jar_file" | grep -Fx 'data/no_lewd_otherworld/recipe/lockbox_photo.json'
           jar tf "$jar_file" | grep -Fx 'pack.mcmeta'
 

@@ -1,6 +1,6 @@
 {
 	"parent": "minecraft:item/generated",
 	"textures": {
-		"layer0": "no_lewd_otherworld:item/locked_muzzle"
+		"layer0": "no_lewd_otherworld:item/muzzle/locked_muzzle"
 	}
 }
