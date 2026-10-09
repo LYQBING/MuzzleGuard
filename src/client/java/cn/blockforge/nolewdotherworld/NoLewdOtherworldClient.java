@@ -10,9 +10,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.fabricmc.api.ClientModInitializer;
 import eu.pb4.trinkets.api.client.TrinketRenderer;
 import eu.pb4.trinkets.api.client.TrinketRendererRegistry;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
 public final class NoLewdOtherworldClient implements ClientModInitializer {
@@ -36,7 +34,7 @@ public final class NoLewdOtherworldClient implements ClientModInitializer {
 
 			ItemStackRenderState itemState = new ItemStackRenderState();
 			Minecraft.getInstance().getItemModelResolver().updateForTopItem(
-					itemState, face ? new ItemStack(NoLewdOtherworldMod.MUZZLE_RENDER) : stack,
+					itemState, stack,
 					ItemDisplayContext.NONE, Minecraft.getInstance().level, null, stack.hashCode());
 			itemState.submit(poseStack, submit, light, OverlayTexture.NO_OVERLAY, 0);
 			poseStack.popPose();

@@ -50,7 +50,6 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static final String LOCKED = "muzzle_guard_locked";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
 	private static final Identifier MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "muzzle");
-	private static final Identifier MUZZLE_RENDER_ID = Identifier.fromNamespaceAndPath(MOD_ID, "muzzle_render");
 	private static final Identifier LOCKED_MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_muzzle");
 	private static final Identifier COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "collar");
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_collar");
@@ -80,11 +79,6 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 					.setId(ResourceKey.create(Registries.ITEM, MUZZLE_ID))
 					.component(TrinketDataComponents.EQUIPMENT, TrinketEquippable.DEFAULT.withSlots("head/face"))
 					.stacksTo(1), "head", "face")
-	);
-	public static final Item MUZZLE_RENDER = Registry.register(
-			BuiltInRegistries.ITEM,
-			MUZZLE_RENDER_ID,
-			new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, MUZZLE_RENDER_ID)).stacksTo(1))
 	);
 	public static final Item LOCKED_MUZZLE = registerWearable(LOCKED_MUZZLE_ID, "head", "face");
 	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
