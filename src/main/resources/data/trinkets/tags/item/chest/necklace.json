@@ -1,8 +1,8 @@
 {
 	"replace": false,
 	"values": [
-		"muzzle_guard:lockbox_photo",
-		"muzzle_guard:collar",
-		"muzzle_guard:locked_collar"
+		"no_lewd_otherworld:lockbox_photo",
+		"no_lewd_otherworld:collar",
+		"no_lewd_otherworld:locked_collar"
 	]
 }

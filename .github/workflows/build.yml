@@ -1,4 +1,4 @@
-name: Build Muzzle Guard
+name: Build 不许涩涩的异世界
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
 
       - name: Verify required mod resources
         run: |
-          jar_file=$(find build/libs -maxdepth 1 -name 'muzzle-guard-*.jar' ! -name '*sources.jar' | head -n 1)
+          jar_file=$(find build/libs -maxdepth 1 -name 'no-lewd-otherworld-*.jar' ! -name '*sources.jar' | head -n 1)
           test -n "$jar_file"
-          jar tf "$jar_file" | grep -Fx 'assets/muzzle_guard/textures/item/muzzle_face.png'
-          jar tf "$jar_file" | grep -Fx 'data/muzzle_guard/recipe/lockbox_photo.json'
+          jar tf "$jar_file" | grep -Fx 'assets/no_lewd_otherworld/textures/item/muzzle_face.png'
+          jar tf "$jar_file" | grep -Fx 'data/no_lewd_otherworld/recipe/lockbox_photo.json'
           jar tf "$jar_file" | grep -Fx 'pack.mcmeta'
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
         with:
-          name: muzzle-guard-1.0.15
-          path: build/libs/muzzle-guard-1.0.15.jar
+          name: no-lewd-otherworld-1.0.16
+          path: build/libs/no-lewd-otherworld-1.0.16.jar

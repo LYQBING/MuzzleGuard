@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "equipment",
+	"pattern": [
+		" I ",
+		"IMI",
+		" I "
+	],
+	"key": {
+		"I": "minecraft:iron_ingot",
+		"M": "no_lewd_otherworld:muzzle"
+	},
+	"result": {
+		"id": "no_lewd_otherworld:locked_muzzle",
+		"count": 1
+	}
+}

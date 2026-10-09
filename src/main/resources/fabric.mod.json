@@ -1,16 +1,16 @@
 {
 	"schemaVersion": 1,
-	"id": "muzzle_guard",
+	"id": "no_lewd_otherworld",
 	"version": "${version}",
-	"name": "Muzzle Guard (Needs of Nature Addon)",
-	"description": "Face gags, collars, and key-bound padlocks for Trinkets, with Needs of Nature animation protection.",
+	"name": "不许涩涩的异世界",
+	"description": "口球、项圈与锁具饰品，并提供 Needs of Nature 动画保护。",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"cn.blockforge.muzzleguard.MuzzleGuardMod"
+			"cn.blockforge.nolewdotherworld.NoLewdOtherworldMod"
 		],
 		"client": [
-			"cn.blockforge.muzzleguard.MuzzleGuardClient"
+			"cn.blockforge.nolewdotherworld.NoLewdOtherworldClient"
 		]
 	},
 	"depends": {

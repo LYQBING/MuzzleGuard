@@ -1,0 +1,19 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "equipment",
+	"pattern": [
+		" R ",
+		"ICI",
+		" G "
+	],
+	"key": {
+		"R": "minecraft:redstone",
+		"I": "minecraft:iron_ingot",
+		"C": "minecraft:copper_ingot",
+		"G": "minecraft:gold_nugget"
+	},
+	"result": {
+		"id": "no_lewd_otherworld:shock_controller",
+		"count": 1
+	}
+}

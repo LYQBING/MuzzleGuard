@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "equipment",
+	"pattern": [
+		" I ",
+		"ICI",
+		" I "
+	],
+	"key": {
+		"I": "minecraft:iron_ingot",
+		"C": "no_lewd_otherworld:collar"
+	},
+	"result": {
+		"id": "no_lewd_otherworld:locked_collar",
+		"count": 1
+	}
+}

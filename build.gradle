@@ -18,7 +18,7 @@ repositories {
 loom {
 	splitEnvironmentSourceSets()
 	mods {
-		muzzle_guard {
+		no_lewd_otherworld {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

@@ -1,7 +1,7 @@
 {
 	"replace": false,
 	"values": [
-		"muzzle_guard:muzzle",
-		"muzzle_guard:locked_muzzle"
+		"no_lewd_otherworld:muzzle",
+		"no_lewd_otherworld:locked_muzzle"
 	]
 }
