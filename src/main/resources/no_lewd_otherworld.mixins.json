@@ -8,7 +8,8 @@
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.ClientIntegratedServerMixin"
+		"client.ClientIntegratedServerMixin",
+		"client.BlockSingleplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
