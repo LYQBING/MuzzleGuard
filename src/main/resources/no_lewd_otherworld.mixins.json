@@ -8,8 +8,7 @@
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.ClientIntegratedServerMixin",
-		"client.MinecraftAccessor"
+		"client.ClientIntegratedServerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
