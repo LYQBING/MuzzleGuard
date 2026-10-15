@@ -19,7 +19,7 @@ public abstract class ClientIntegratedServerMixin {
 		if (!WorldCreationGate.isAllowed()) {
 			Minecraft minecraft = Minecraft.getInstance();
 			minecraft.execute(() -> SystemToast.add(
-					minecraft.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION,
+					minecraft.getToasts(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION,
 					BLOCKED_MESSAGE, Component.empty()));
 			callbackInfo.setReturnValue(false);
 		}

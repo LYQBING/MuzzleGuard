@@ -18,7 +18,7 @@ public abstract class CreateWorldScreenMixin {
 	private void noLewdOtherworld$checkWorldCreationPermission(CallbackInfo callbackInfo) {
 		if (!WorldCreationGate.isAllowed()) {
 			Minecraft minecraft = Minecraft.getInstance();
-			SystemToast.add(minecraft.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, BLOCKED_MESSAGE, Component.empty());
+			SystemToast.add(minecraft.getToasts(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, BLOCKED_MESSAGE, Component.empty());
 			callbackInfo.cancel();
 		}
 	}
