@@ -30,7 +30,7 @@ public abstract class CreateWorldScreenMixin {
 	private void noLewdOtherworld$renderBlockedMessage(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo callbackInfo) {
 		if (noLewdOtherworld$showBlockedMessage) {
 			Screen screen = (Screen) (Object) this;
-			graphics.centeredText(Minecraft.getInstance().font, BLOCKED_MESSAGE, screen.width / 2, screen.height / 2, 0xFFFF5555);
+			graphics.centeredText(Minecraft.getInstance().font, BLOCKED_MESSAGE, screen.width / 2, screen.height / 2, 0xFFFFFFFF);
 		}
 	}
 }
