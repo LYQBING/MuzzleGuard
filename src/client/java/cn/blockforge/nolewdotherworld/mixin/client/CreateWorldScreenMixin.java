@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CreateWorldScreen.class)
 public abstract class CreateWorldScreenMixin {
-	@Inject(method = "createLevel", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "onCreate", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$checkWorldCreationPermission(CallbackInfo callbackInfo) {
 		if (!WorldCreationGate.isAllowed()) {
 			Minecraft minecraft = Minecraft.getInstance();
