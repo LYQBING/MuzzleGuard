@@ -1,4 +1,4 @@
-package cn.blockforge.nolewdotherworld.mixin.client;
+﻿package cn.blockforge.nolewdotherworld.mixin.client;
 
 import cn.blockforge.nolewdotherworld.WorldCreationGate;
 import cn.blockforge.nolewdotherworld.WorldCreationToast;

@@ -1,7 +1,7 @@
 package cn.blockforge.nolewdotherworld.mixin.client;
 
 import cn.blockforge.nolewdotherworld.WorldCreationGate;
-import cn.blockforge.nolewdotherworld.WorldCreationToast;
+import cn.blockforge.nolewdotherworld.WorldCreationBlockedScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
@@ -15,7 +15,7 @@ public abstract class BlockSingleplayerScreenMixin {
 	@Inject(method = "setScreenAndShow", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockSingleplayerScreen(Screen screen, CallbackInfo callbackInfo) {
 		if (!WorldCreationGate.isAllowed() && screen instanceof SelectWorldScreen) {
-			WorldCreationToast.show((Minecraft) (Object) this);
+			((Minecraft) (Object) this).setScreenAndShow(new WorldCreationBlockedScreen());
 			callbackInfo.cancel();
 		}
 	}
