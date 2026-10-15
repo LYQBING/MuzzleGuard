@@ -15,7 +15,8 @@ public abstract class BlockSingleplayerScreenMixin {
 	@Inject(method = "setScreenAndShow", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockSingleplayerScreen(Screen screen, CallbackInfo callbackInfo) {
 		if (!WorldCreationGate.isAllowed() && screen instanceof SelectWorldScreen) {
-			((Minecraft) (Object) this).setScreenAndShow(new WorldCreationBlockedScreen());
+			Minecraft minecraft = (Minecraft) (Object) this;
+			minecraft.setScreenAndShow(new WorldCreationBlockedScreen());
 			callbackInfo.cancel();
 		}
 	}
