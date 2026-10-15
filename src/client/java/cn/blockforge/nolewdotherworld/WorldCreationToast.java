@@ -2,6 +2,7 @@ package cn.blockforge.nolewdotherworld;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.network.chat.Component;
 import cn.blockforge.nolewdotherworld.mixin.client.MinecraftAccessor;
 
