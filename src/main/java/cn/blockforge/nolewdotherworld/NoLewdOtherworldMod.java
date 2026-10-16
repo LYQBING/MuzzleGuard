@@ -603,25 +603,16 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			List<Player> protectedPlayers = new java.util.ArrayList<>();
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
-			boolean onlyPlayers = actors.size() >= 2;
 			for (UUID actorId : actors) {
 				Player player = world.getPlayerByUUID(actorId);
-				if (player == null) {
-					onlyPlayers = false;
-				} else if (isProtectedByKeepsake(player)) {
+				if (player != null && isProtectedByKeepsake(player)) {
 					protectedPlayers.add(player);
 				}
 			}
 			if (requester != null && isProtectedByKeepsake(requester) && !protectedPlayers.contains(requester)) {
 				protectedPlayers.add(requester);
 			}
-			boolean playerInitiatedPlayerAnimation = onlyPlayers
-					&& requester != null
-					&& actors.contains(requester.getUUID());
-			if (protectedPlayers.isEmpty() || playerInitiatedPlayerAnimation) {
-				return true;
-			}
-			return false;
+			return protectedPlayers.isEmpty();
 		} catch (ReflectiveOperationException | ClassCastException exception) {
 			System.err.println("[No Lewd Otherworld] Failed to inspect a Needs of Nature animation: " + exception);
 			return false;
