@@ -21,8 +21,8 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -51,7 +51,7 @@ public final class PlayerAccessManager {
 		});
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
 				Commands.literal("nonaccess")
-						.requires(source -> source.hasPermission(2))
+						.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 						.then(Commands.literal("set")
 								.then(Commands.argument("player", EntityArgument.player())
 									.then(Commands.literal("on").executes(context -> setAccess(EntityArgument.getPlayer(context, "player"), true, context.getSource())))
@@ -90,7 +90,8 @@ public final class PlayerAccessManager {
 	}
 
 	private static void updateEffect(ServerPlayer player) {
-		Holder<MobEffect> energyRelief = BuiltInRegistries.MOB_EFFECT.getHolderOrThrow(ENERGY_RELIEF_KEY);
+		Holder<MobEffect> energyRelief = BuiltInRegistries.MOB_EFFECT.getHolder(ENERGY_RELIEF_KEY)
+				.orElseThrow(() -> new IllegalStateException("Needs of Nature energy relief effect is not registered"));
 		if (isAuthorized(player)) {
 			player.removeEffect(energyRelief);
 			return;
