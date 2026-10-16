@@ -1,6 +1,7 @@
 package cn.blockforge.nolewdotherworld;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,20 +16,16 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 
 public final class PlayerAccessManager {
-	private static final ResourceKey<MobEffect> ENERGY_RELIEF_KEY = ResourceKey.create(
-			Registries.MOB_EFFECT, Identifier.fromNamespaceAndPath("needsofnature", "energy_relief"));
+	private static final Holder<MobEffect> ENERGY_RELIEF = resolveEnergyReliefEffect();
 	private static final int EFFECT_DURATION = 1200;
 	private static final int EFFECT_REFRESH_THRESHOLD = 200;
 	private static final Set<UUID> AUTHORIZED_PLAYERS = new HashSet<>();
@@ -90,15 +87,24 @@ public final class PlayerAccessManager {
 	}
 
 	private static void updateEffect(ServerPlayer player) {
-		Holder<MobEffect> energyRelief = BuiltInRegistries.MOB_EFFECT.getHolder(ENERGY_RELIEF_KEY)
-				.orElseThrow(() -> new IllegalStateException("Needs of Nature energy relief effect is not registered"));
 		if (isAuthorized(player)) {
-			player.removeEffect(energyRelief);
+			player.removeEffect(ENERGY_RELIEF);
 			return;
 		}
-		MobEffectInstance activeEffect = player.getEffect(energyRelief);
+		MobEffectInstance activeEffect = player.getEffect(ENERGY_RELIEF);
 		if (activeEffect == null || activeEffect.getDuration() <= EFFECT_REFRESH_THRESHOLD) {
-			player.addEffect(new MobEffectInstance(energyRelief, EFFECT_DURATION, 0, true, false, false));
+			player.addEffect(new MobEffectInstance(ENERGY_RELIEF, EFFECT_DURATION, 0, true, false, false));
+		}
+	}
+
+	private static Holder<MobEffect> resolveEnergyReliefEffect() {
+		try {
+			Class<?> effectsClass = Class.forName("com.nonid.effect.NonStatusEffects");
+			Field effectField = effectsClass.getField("ENERGY_RELIEF");
+			MobEffect effect = (MobEffect) effectField.get(null);
+			return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect);
+		} catch (ReflectiveOperationException | LinkageError | ClassCastException exception) {
+			throw new IllegalStateException("Could not resolve the Needs of Nature energy relief effect", exception);
 		}
 	}
 
