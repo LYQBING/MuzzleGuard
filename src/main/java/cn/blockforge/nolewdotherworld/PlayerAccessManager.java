@@ -59,7 +59,7 @@ public final class PlayerAccessManager {
 	}
 
 	public static boolean isAuthorized(UUID playerId) {
-		return AUTHORIZED_PLAYERS.contains(playerId);
+		return !WorldCreationGate.isAuthorizationListEnabled() || AUTHORIZED_PLAYERS.contains(playerId);
 	}
 
 	public static boolean isAuthorized(ServerPlayer player) {
@@ -75,9 +75,13 @@ public final class PlayerAccessManager {
 		updateEffect(player);
 		save();
 		sendIdentityMessage(player);
-		source.sendSuccess(() -> Component.translatable(
-				authorized ? "message.no_lewd_otherworld.access_enabled" : "message.no_lewd_otherworld.access_disabled",
-				player.getDisplayName()), true);
+		if (WorldCreationGate.isAuthorizationListEnabled()) {
+			source.sendSuccess(() -> Component.translatable(
+					authorized ? "message.no_lewd_otherworld.access_enabled" : "message.no_lewd_otherworld.access_disabled",
+					player.getDisplayName()), true);
+		} else {
+			source.sendSuccess(() -> Component.translatable("message.no_lewd_otherworld.authorization_list_disabled"), true);
+		}
 		return 1;
 	}
 

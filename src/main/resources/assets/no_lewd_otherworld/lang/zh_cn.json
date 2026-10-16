@@ -39,10 +39,11 @@
 	"message.no_lewd_otherworld.controller_shocked_target": "你受到电击控制器惩罚。",
 	"message.no_lewd_otherworld.login_standard": "当前身份：标准玩家",
 	"message.no_lewd_otherworld.login_unrestricted": "当前身份：无限制玩家。",
-	"message.no_lewd_otherworld.access_enabled": "已授权 %s 成为无限制玩家。",
-	"message.no_lewd_otherworld.access_disabled": "已取消 %s 的授权；其现为标准玩家。",
+	"message.no_lewd_otherworld.access_enabled": "已变更 %s 身份为无限制玩家。",
+	"message.no_lewd_otherworld.access_disabled": "已变更 %s 身份为标准玩家。",
 	"message.no_lewd_otherworld.access_status_unrestricted": "%s 当前是无限制玩家。",
 	"message.no_lewd_otherworld.access_status_standard": "%s 当前是标准玩家。",
+	"message.no_lewd_otherworld.authorization_list_disabled": "变更已保存，但授权名单功能已关闭",
 	"item.no_lewd_otherworld.lockbox_photo": "信物项链",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "承载珍贵回忆，拒绝违背彼此的约定。",
 	"itemGroup.no_lewd_otherworld": "不许涩涩的异世界"
