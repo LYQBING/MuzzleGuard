@@ -37,6 +37,12 @@
 	"message.no_lewd_otherworld.controller_unbound": "The target is offline or removed/changed the collar; the shock controller is now unbound.",
 	"message.no_lewd_otherworld.controller_shocked": "You used the shock controller on %s.",
 	"message.no_lewd_otherworld.controller_shocked_target": "You were punished by the shock controller.",
+	"message.no_lewd_otherworld.login_standard": "Current status: Standard Player (energy relief is active and monster animations are protected).",
+	"message.no_lewd_otherworld.login_unrestricted": "Current status: Unrestricted Player.",
+	"message.no_lewd_otherworld.access_enabled": "%s is now an Unrestricted Player.",
+	"message.no_lewd_otherworld.access_disabled": "%s is now a Standard Player.",
+	"message.no_lewd_otherworld.access_status_unrestricted": "%s is an Unrestricted Player.",
+	"message.no_lewd_otherworld.access_status_standard": "%s is a Standard Player.",
 	"item.no_lewd_otherworld.lockbox_photo": "Keepsake Necklace",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "A keepsake of a cherished bond, refusing to break the promise between you.",
 	"itemGroup.no_lewd_otherworld": "Gags and Collars"

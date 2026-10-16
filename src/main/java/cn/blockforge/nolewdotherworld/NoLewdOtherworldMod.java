@@ -112,7 +112,6 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		NonPermissionManager.initialize();
 		Registry.register(
 				BuiltInRegistries.CREATIVE_MODE_TAB,
 				Identifier.fromNamespaceAndPath(MOD_ID, "main"),
@@ -160,6 +159,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			return false;
 		});
 		registerTrinketRules();
+		PlayerAccessManager.register();
 		registerAnimationBlocker();
 	}
 
@@ -547,6 +547,11 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		});
 	}
 
+	private static boolean isProtectedByKeepsake(Player player) {
+		return !PlayerAccessManager.isAuthorized(player.getUUID())
+				|| TrinketsApi.getAttachment(player).isEquipped(LOCKBOX_PHOTO);
+	}
+
 	private static void registerAnimationBlocker() {
 		try {
 			ClassLoader loader = NoLewdOtherworldMod.class.getClassLoader();
@@ -595,19 +600,28 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			Class<?> contextClass = context.getClass();
 			ServerLevel world = (ServerLevel) contextClass.getMethod("world").invoke(context);
 			Player requester = (Player) contextClass.getMethod("requester").invoke(context);
-			List<Player> restrictedPlayers = new java.util.ArrayList<>();
+			List<Player> protectedPlayers = new java.util.ArrayList<>();
 			@SuppressWarnings("unchecked")
 			List<UUID> actors = (List<UUID>) contextClass.getMethod("actorUuids").invoke(context);
+			boolean onlyPlayers = actors.size() >= 2;
 			for (UUID actorId : actors) {
 				Player player = world.getPlayerByUUID(actorId);
-				if (player != null && !NonPermissionManager.isAllowed(player.getUUID())) {
-					restrictedPlayers.add(player);
+				if (player == null) {
+					onlyPlayers = false;
+				} else if (isProtectedByKeepsake(player)) {
+					protectedPlayers.add(player);
 				}
 			}
-			if (requester != null && !NonPermissionManager.isAllowed(requester.getUUID()) && !restrictedPlayers.contains(requester)) {
-				restrictedPlayers.add(requester);
+			if (requester != null && isProtectedByKeepsake(requester) && !protectedPlayers.contains(requester)) {
+				protectedPlayers.add(requester);
 			}
-			return restrictedPlayers.isEmpty();
+			boolean playerInitiatedPlayerAnimation = onlyPlayers
+					&& requester != null
+					&& actors.contains(requester.getUUID());
+			if (protectedPlayers.isEmpty() || playerInitiatedPlayerAnimation) {
+				return true;
+			}
+			return false;
 		} catch (ReflectiveOperationException | ClassCastException exception) {
 			System.err.println("[No Lewd Otherworld] Failed to inspect a Needs of Nature animation: " + exception);
 			return false;
