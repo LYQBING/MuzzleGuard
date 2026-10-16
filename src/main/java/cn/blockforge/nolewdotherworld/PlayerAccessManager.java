@@ -26,8 +26,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 
 public final class PlayerAccessManager {
 	private static final Holder<MobEffect> ENERGY_RELIEF = resolveEnergyReliefEffect();
-	private static final int EFFECT_DURATION = 1200;
-	private static final int EFFECT_REFRESH_THRESHOLD = 200;
+	private static final int EFFECT_DURATION = -1;
+	private static final int EFFECT_AMPLIFIER = 9;
 	private static final Set<UUID> AUTHORIZED_PLAYERS = new HashSet<>();
 	private static Path storageFile;
 	private static int effectRefreshTicks;
@@ -92,8 +92,9 @@ public final class PlayerAccessManager {
 			return;
 		}
 		MobEffectInstance activeEffect = player.getEffect(ENERGY_RELIEF);
-		if (activeEffect == null || activeEffect.getDuration() <= EFFECT_REFRESH_THRESHOLD) {
-			player.addEffect(new MobEffectInstance(ENERGY_RELIEF, EFFECT_DURATION, 0, true, false, false));
+		if (activeEffect == null || activeEffect.getDuration() != EFFECT_DURATION
+				|| activeEffect.getAmplifier() != EFFECT_AMPLIFIER) {
+			player.addEffect(new MobEffectInstance(ENERGY_RELIEF, EFFECT_DURATION, EFFECT_AMPLIFIER, true, false, false));
 		}
 	}
 
