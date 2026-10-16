@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -24,7 +25,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.level.storage.LevelResource;
 
 public final class PlayerAccessManager {
 	private static final ResourceKey<MobEffect> ENERGY_RELIEF_KEY = ResourceKey.create(
@@ -39,8 +39,8 @@ public final class PlayerAccessManager {
 	}
 
 	public static void register() {
-		ServerLifecycleEvents.SERVER_STARTED.register(PlayerAccessManager::load);
-		ServerLifecycleEvents.SERVER_STOPPING.register(PlayerAccessManager::save);
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> load());
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> save());
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			updateEffect(handler.player);
 			sendIdentityMessage(handler.player);
@@ -54,8 +54,8 @@ public final class PlayerAccessManager {
 						.requires(source -> source.hasPermission(2))
 						.then(Commands.literal("set")
 								.then(Commands.argument("player", EntityArgument.player())
-										.then(Commands.literal("on").executes(context -> setAccess(context.getSource().getServer(), EntityArgument.getPlayer(context, "player"), true, context.getSource())))
-										.then(Commands.literal("off").executes(context -> setAccess(context.getSource().getServer(), EntityArgument.getPlayer(context, "player"), false, context.getSource())))))
+									.then(Commands.literal("on").executes(context -> setAccess(EntityArgument.getPlayer(context, "player"), true, context.getSource())))
+									.then(Commands.literal("off").executes(context -> setAccess(EntityArgument.getPlayer(context, "player"), false, context.getSource())))))
 						.then(Commands.literal("check")
 								.then(Commands.argument("player", EntityArgument.player())
 										.executes(context -> checkAccess(EntityArgument.getPlayer(context, "player"), context.getSource()))))));
@@ -69,14 +69,14 @@ public final class PlayerAccessManager {
 		return isAuthorized(player.getUUID());
 	}
 
-	private static int setAccess(MinecraftServer server, ServerPlayer player, boolean authorized, net.minecraft.commands.CommandSourceStack source) {
+	private static int setAccess(ServerPlayer player, boolean authorized, net.minecraft.commands.CommandSourceStack source) {
 		if (authorized) {
 			AUTHORIZED_PLAYERS.add(player.getUUID());
 		} else {
 			AUTHORIZED_PLAYERS.remove(player.getUUID());
 		}
 		updateEffect(player);
-		save(server);
+		save();
 		sendIdentityMessage(player);
 		source.sendSuccess(() -> Component.translatable(
 				authorized ? "message.no_lewd_otherworld.access_enabled" : "message.no_lewd_otherworld.access_disabled",
@@ -108,11 +108,16 @@ public final class PlayerAccessManager {
 		return 1;
 	}
 
-	private static void load(MinecraftServer server) {
-		Path worldRoot = server.getWorldPath(LevelResource.ROOT);
-		storageFile = worldRoot.resolve("no_lewd_otherworld").resolve("authorized_players.txt");
+	private static void load() {
+		storageFile = getStorageFile();
 		AUTHORIZED_PLAYERS.clear();
 		loadAuthorizedPlayers(storageFile);
+	}
+
+	private static Path getStorageFile() {
+		return FabricLoader.getInstance().getConfigDir()
+				.resolve(NoLewdOtherworldMod.MOD_ID)
+				.resolve("authorized_players.txt");
 	}
 
 	private static void loadAuthorizedPlayers(Path file) {
@@ -129,9 +134,9 @@ public final class PlayerAccessManager {
 		}
 	}
 
-	private static void save(MinecraftServer server) {
+	private static void save() {
 		if (storageFile == null) {
-			storageFile = server.getWorldPath(LevelResource.ROOT).resolve("no_lewd_otherworld").resolve("authorized_players.txt");
+			storageFile = getStorageFile();
 		}
 		try {
 			Files.createDirectories(storageFile.getParent());
