@@ -188,8 +188,8 @@ public final class PlayerLeashManager {
 						velocity = velocity.add(dx / distance * strength,
 								dy / distance * strength, dz / distance * strength);
 						motionChanged = true;
-					} else if (target.getDeltaMovement().horizontalDistanceSqr() >= 0.0004) {
-						velocity = new Vec3(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
+					} else if (target.getDeltaMovement().horizontalDistanceSqr() > 0.0) {
+						velocity = new Vec3(0.0, velocity.y, 0.0);
 						motionChanged = true;
 					}
 					if (motionChanged) {
