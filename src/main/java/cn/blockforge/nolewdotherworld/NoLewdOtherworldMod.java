@@ -407,6 +407,14 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		return getEquippedCollar(player) != null;
 	}
 
+	public static boolean canLeashPlayer(Player holder, Player target) {
+		ItemStack collar = getEquippedCollar(target);
+		if (collar == null) return false;
+		return !collar.is(LOCKED_COLLAR)
+				|| !customData(collar).getBoolean(LOCKED).orElse(false)
+				|| hasMatchingKey(holder, customData(collar).getString(BOUND_KEY_UUID).orElse(""));
+	}
+
 	private static String getEquippedCollarId(Player player) {
 		ItemStack collar = getEquippedCollar(player);
 		return collar == null ? "" : customData(collar).getString(COLLAR_UUID).orElse("");
