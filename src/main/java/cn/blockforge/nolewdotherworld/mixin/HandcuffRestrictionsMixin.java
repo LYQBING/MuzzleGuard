@@ -77,8 +77,21 @@ public abstract class HandcuffRestrictionsMixin {
 	}
 
 	private static boolean isEquipmentQuickMove(ServerboundContainerClickPacket packet, Slot slot) {
-		if (!packet.clickType().toString().equals("QUICK_MOVE")) return false;
+		if (!isQuickMove(packet)) return false;
 		ItemStack stack = slot.getItem();
 		return stack.has(DataComponents.EQUIPPABLE) || stack.has(TrinketDataComponents.EQUIPMENT);
+	}
+
+	private static boolean isQuickMove(ServerboundContainerClickPacket packet) {
+		for (var method : packet.getClass().getMethods()) {
+			if (method.getParameterCount() != 0 || !method.getReturnType().isEnum()) continue;
+			try {
+				Object value = method.invoke(packet);
+				if (value != null && value.toString().equals("QUICK_MOVE")) return true;
+			} catch (ReflectiveOperationException ignored) {
+				return false;
+			}
+		}
+		return false;
 	}
 }
