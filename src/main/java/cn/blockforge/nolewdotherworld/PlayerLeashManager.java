@@ -46,11 +46,12 @@ public final class PlayerLeashManager {
 
 	private static InteractionResult onUseEntity(Player player, Level world, InteractionHand hand,
 			net.minecraft.world.entity.Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
-		if (world.isClientSide() || !(player instanceof ServerPlayer holder)
-				|| !(entity instanceof ServerPlayer target) || holder == target
-				|| !holder.getItemInHand(hand).is(Items.LEAD)) {
+		if (!(entity instanceof Player) || !player.getItemInHand(hand).is(Items.LEAD)) {
 			return InteractionResult.PASS;
 		}
+		if (world.isClientSide()) return InteractionResult.SUCCESS;
+		if (!(player instanceof ServerPlayer holder) || !(entity instanceof ServerPlayer target)
+				|| holder == target) return InteractionResult.FAIL;
 
 		Link existing = LEASHES_BY_TARGET.get(target.getUUID());
 		if (existing != null) {
@@ -61,7 +62,7 @@ public final class PlayerLeashManager {
 		if (LEASHES_BY_TARGET.values().stream().anyMatch(link -> link.holderId.equals(target.getUUID()))) {
 			return InteractionResult.FAIL;
 		}
-		if (!NoLewdOtherworldMod.canLeashPlayer(holder, target)) return InteractionResult.PASS;
+		if (!NoLewdOtherworldMod.canLeashPlayer(holder, target)) return InteractionResult.FAIL;
 
 		if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 		EntityType<?> allayType = BuiltInRegistries.ENTITY_TYPE.get(
