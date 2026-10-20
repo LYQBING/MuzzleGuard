@@ -54,24 +54,18 @@ public abstract class HandcuffRestrictionsMixin {
 		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		int slotId = packet.slotNum();
 		ItemStack cursor = player.containerMenu.getCarried();
-		if (slotId == -999 && cursor.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
+		boolean affectsStraitjacket = cursor.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET);
+		for (int i = 0; i < player.containerMenu.slots.size(); i++) {
+			if (!player.containerMenu.getSlot(i).getItem().is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) continue;
+			if (slotId == i || packet.changedSlots().containsKey(i)) {
+				affectsStraitjacket = true;
+				break;
+			}
+		}
+		if (affectsStraitjacket) {
 			player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
+			player.containerMenu.broadcastFullState();
 			callbackInfo.cancel();
-			return;
-		}
-		if (slotId >= 0 && slotId < player.containerMenu.slots.size()) {
-			ItemStack clicked = player.containerMenu.getSlot(slotId).getItem();
-			if (clicked.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
-				player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
-				callbackInfo.cancel();
-				return;
-			}
-		}
-		if (packet.slotNum() >= 0 && packet.slotNum() < player.containerMenu.slots.size()) {
-			if (cursor.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
-				player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
-				callbackInfo.cancel();
-			}
 		}
 	}
 
