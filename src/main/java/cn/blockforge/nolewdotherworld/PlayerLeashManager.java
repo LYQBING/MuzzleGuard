@@ -25,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
@@ -186,6 +187,9 @@ public final class PlayerLeashManager {
 						double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
 						velocity = velocity.add(dx / distance * strength,
 								dy / distance * strength, dz / distance * strength);
+						motionChanged = true;
+					} else if (target.getDeltaMovement().horizontalDistanceSqr() >= 0.0004) {
+						velocity = new Vec3(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
 						motionChanged = true;
 					}
 					if (motionChanged) {
