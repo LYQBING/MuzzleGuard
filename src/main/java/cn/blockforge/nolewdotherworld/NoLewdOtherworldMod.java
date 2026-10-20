@@ -160,6 +160,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		});
 		registerTrinketRules();
 		PlayerAccessManager.register();
+		PlayerLeashManager.register();
 		registerAnimationBlocker();
 	}
 
@@ -400,6 +401,10 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			if (stack.is(COLLAR) || stack.is(LOCKED_COLLAR)) return stack;
 		}
 		return null;
+	}
+
+	public static boolean isCollarEquipped(Player player) {
+		return getEquippedCollar(player) != null;
 	}
 
 	private static String getEquippedCollarId(Player player) {
