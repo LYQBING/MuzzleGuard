@@ -47,8 +47,16 @@ public final class PlayerLeashManager {
 
 	public static void register() {
 		UseEntityCallback.EVENT.register(PlayerLeashManager::onUseEntity);
-		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) ->
-			isLeashAnchor(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
+		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+			if (isLeashAnchor(entity)) return InteractionResult.FAIL;
+			if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) {
+				if (player instanceof ServerPlayer serverPlayer) {
+					serverPlayer.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.restrained_attack"));
+				}
+				return InteractionResult.FAIL;
+			}
+			return InteractionResult.PASS;
+		});
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
 			!isLeashAnchor(entity));
 		ServerTickEvents.END_SERVER_TICK.register(PlayerLeashManager::tick);

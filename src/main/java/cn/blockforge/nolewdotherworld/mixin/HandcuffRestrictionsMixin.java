@@ -3,7 +3,6 @@ package cn.blockforge.nolewdotherworld.mixin;
 import cn.blockforge.nolewdotherworld.NoLewdOtherworldMod;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
@@ -33,29 +32,6 @@ public abstract class HandcuffRestrictionsMixin {
 	private void noLewdOtherworld$blockUseItemOn(ServerboundUseItemOnPacket packet, CallbackInfo callbackInfo) {
 		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_use"));
-		callbackInfo.cancel();
-	}
-
-	@Inject(method = "handleInteract", at = @At("HEAD"), cancellable = true)
-	private void noLewdOtherworld$blockEntityInteractions(ServerboundInteractPacket packet, CallbackInfo callbackInfo) {
-		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
-		boolean[] attacking = {false};
-		packet.dispatch(new ServerboundInteractPacket.Handler() {
-			@Override
-			public void onInteraction(net.minecraft.world.InteractionHand hand) {
-			}
-
-			@Override
-			public void onInteraction(net.minecraft.world.InteractionHand hand, net.minecraft.world.phys.Vec3 location) {
-			}
-
-			@Override
-			public void onAttack() {
-				attacking[0] = true;
-			}
-		});
-		if (!attacking[0]) return;
-		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_attack"));
 		callbackInfo.cancel();
 	}
 
