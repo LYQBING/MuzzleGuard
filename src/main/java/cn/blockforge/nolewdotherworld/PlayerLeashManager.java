@@ -25,7 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
@@ -174,28 +173,12 @@ public final class PlayerLeashManager {
 				}
 
 				double distance = Math.sqrt(distanceSquared);
-				if (distance > 1.0E-6) {
+				if (distance > PULL_START_DISTANCE) {
 					var velocity = target.getDeltaMovement();
-					double towardKnotSpeed = (velocity.x * dx + velocity.y * dy + velocity.z * dz) / distance;
-					boolean motionChanged = false;
-					if (towardKnotSpeed < 0.0) {
-						velocity = velocity.add(dx / distance * -towardKnotSpeed,
-								dy / distance * -towardKnotSpeed, dz / distance * -towardKnotSpeed);
-						motionChanged = true;
-					}
-					if (distance > PULL_START_DISTANCE) {
-						double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
-						velocity = velocity.add(dx / distance * strength,
-								dy / distance * strength, dz / distance * strength);
-						motionChanged = true;
-					} else if (target.getDeltaMovement().horizontalDistanceSqr() > 0.0) {
-						velocity = new Vec3(0.0, velocity.y, 0.0);
-						motionChanged = true;
-					}
-					if (motionChanged) {
-						target.setDeltaMovement(velocity);
-						target.connection.send(new ClientboundSetEntityMotionPacket(target));
-					}
+					double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
+					target.setDeltaMovement(velocity.add(dx / distance * strength,
+							dy / distance * strength, dz / distance * strength));
+					target.connection.send(new ClientboundSetEntityMotionPacket(target));
 				}
 				continue;
 			}
