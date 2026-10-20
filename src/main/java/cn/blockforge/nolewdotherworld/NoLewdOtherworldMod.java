@@ -95,7 +95,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			LOCKED_STRAITJACKET_ID,
 			new WearableItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, LOCKED_STRAITJACKET_ID))
-					.component(DataComponents.EQUIPPABLE, net.minecraft.world.item.equipment.Equippable.builder(net.minecraft.world.entity.EquipmentSlot.CHEST).setAssetId(Identifier.withDefaultNamespace("diamond")).build())
+					.component(DataComponents.EQUIPPABLE, net.minecraft.world.item.equipment.Equippable.builder(net.minecraft.world.entity.EquipmentSlot.CHEST).assetId(Identifier.withDefaultNamespace("diamond")).build())
 					.stacksTo(1), "armor", "chest", true)
 	);
 	public static final Item KEY = Registry.register(
@@ -194,7 +194,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	}
 
 	private static boolean removeLockBinding(Player actor, Player target) {
-		ItemStack chestplate = target.getInventory().getArmor(EquipmentSlot.CHEST.getIndex());
+		ItemStack chestplate = target.getItemBySlot(EquipmentSlot.CHEST);
 		if (chestplate.is(LOCKED_STRAITJACKET)) {
 			CompoundTag data = customData(chestplate);
 			data.remove(BOUND_KEY_UUID);
@@ -448,7 +448,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	}
 
 	public static boolean isRestrainedByStraitjacket(Player player) {
-		ItemStack chestplate = player.getInventory().getArmor(EquipmentSlot.CHEST.getIndex());
+		ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
 		return chestplate.is(LOCKED_STRAITJACKET) && customData(chestplate).getBoolean(LOCKED).orElse(false);
 	}
 
@@ -505,9 +505,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	}
 
 	private static boolean equipStraitjacket(Player actor, Player target, ItemStack held) {
-		if (held.isEmpty() || !target.getInventory().getArmor(EquipmentSlot.CHEST.getIndex()).isEmpty()) return false;
-		target.getInventory().armor.set(EquipmentSlot.CHEST.getIndex(), held.copyWithCount(1));
-		target.getInventory().setChanged();
+		if (held.isEmpty() || !target.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) return false;
+		target.setItemSlot(EquipmentSlot.CHEST, held.copyWithCount(1));
 		if (!actor.getAbilities().instabuild) {
 			held.shrink(1);
 			actor.getInventory().setChanged();
@@ -523,7 +522,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		String id = customData(key).getString(KEY_UUID).orElse("");
 		String boundKeyId = id;
 		List<LockCandidate> candidates = new ArrayList<>();
-		ItemStack chestplate = target.getInventory().getArmor(EquipmentSlot.CHEST.getIndex());
+		ItemStack chestplate = target.getItemBySlot(EquipmentSlot.CHEST);
 		if (isLockableItem(chestplate)) candidates.add(new LockCandidate(chestplate, target.getInventory()));
 		for (String slot : new String[]{"head/face", "chest/necklace"}) {
 			TrinketInventory inventory = getTrinketInventory(target, slot);
