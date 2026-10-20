@@ -73,9 +73,12 @@ public final class PlayerLeashManager {
 		if (existing != null) {
 			boolean attachedToFence = isLeashFenceKnot(existing.anchor.getLeashHolder());
 			if (existing.holderId.equals(holder.getUUID())) {
-				if (attachedToFence) return InteractionResult.SUCCESS;
-				removeLink(target.getUUID(), existing);
-				return InteractionResult.SUCCESS;
+				if (attachedToFence) return holdingLead ? InteractionResult.SUCCESS : InteractionResult.PASS;
+				if (holdingLead || player.getItemInHand(hand).isEmpty()) {
+					removeLink(target.getUUID(), existing);
+					return InteractionResult.SUCCESS;
+				}
+				return InteractionResult.PASS;
 			}
 			if (!holdingLead) return InteractionResult.PASS;
 			if (!attachedToFence) {
