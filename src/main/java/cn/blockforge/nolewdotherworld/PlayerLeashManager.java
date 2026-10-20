@@ -30,6 +30,9 @@ import net.minecraft.world.level.Level;
 public final class PlayerLeashManager {
 	private static final double BREAK_DISTANCE = 10.0;
 	private static final double PULL_START_DISTANCE = 3.0;
+	private static final double ANCHOR_HEIGHT = 1.125;
+	private static final double MAX_PULL_SPEED = 0.28;
+	private static final double MAX_PULL_ACCELERATION = 0.035;
 	private static final Map<UUID, Link> LEASHES_BY_TARGET = new HashMap<>();
 
 	private PlayerLeashManager() {
@@ -70,7 +73,7 @@ public final class PlayerLeashManager {
 		anchor.setSilent(true);
 		anchor.setInvisible(true);
 		anchor.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, -1, 0, true, false, false));
-		anchor.setPos(target.getX(), target.getY() + 1.0, target.getZ());
+		anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
 		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder.getUUID(), anchor));
@@ -102,13 +105,25 @@ public final class PlayerLeashManager {
 				continue;
 			}
 
-			link.anchor.setPos(target.getX(), target.getY() + 1.0, target.getZ());
+			link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 			double distance = Math.sqrt(distanceSquared);
+			var velocity = target.getDeltaMovement();
 			if (distance > PULL_START_DISTANCE) {
-				double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
-				target.setDeltaMovement(target.getDeltaMovement().add(
-						dx / distance * strength, dy / distance * strength, dz / distance * strength));
+				double strength = Math.min(MAX_PULL_ACCELERATION, (distance - PULL_START_DISTANCE) * 0.01);
+				double velocityX = velocity.x + dx / distance * strength;
+				double velocityY = velocity.y + dy / distance * strength;
+				double velocityZ = velocity.z + dz / distance * strength;
+				double pullSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
+				if (pullSpeed > MAX_PULL_SPEED) {
+					double scale = MAX_PULL_SPEED / pullSpeed;
+					velocityX *= scale;
+					velocityY *= scale;
+					velocityZ *= scale;
+				}
+				target.setDeltaMovement(velocityX, velocityY, velocityZ);
 				target.connection.send(new ClientboundSetEntityMotionPacket(target));
+			} else if (distance > PULL_START_DISTANCE - 0.5) {
+				target.setDeltaMovement(velocity.x * 0.85, velocity.y, velocity.z * 0.85);
 			}
 		}
 	}
