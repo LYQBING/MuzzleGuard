@@ -21,6 +21,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -67,6 +69,7 @@ public final class PlayerLeashManager {
 		anchor.setNoGravity(true);
 		anchor.setSilent(true);
 		anchor.setInvisible(true);
+		anchor.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, -1, 0, true, false, false));
 		anchor.setPos(target.getX(), target.getY() + 1.0, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
