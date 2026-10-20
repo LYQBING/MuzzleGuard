@@ -27,34 +27,33 @@ public abstract class HandcuffRestrictionsMixin {
 
 	@Inject(method = "handleUseItem", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockUseItem(ServerboundUseItemPacket packet, CallbackInfo callbackInfo) {
-		if (!NoLewdOtherworldMod.areHandcuffsRestricting(player)) return;
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		if (NoLewdOtherworldMod.isUnlockKey(player.getItemInHand(packet.hand()))) return;
 		callbackInfo.cancel();
 	}
 
 	@Inject(method = "handleUseItemOn", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockUseItemOn(ServerboundUseItemOnPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.areHandcuffsRestricting(player)) callbackInfo.cancel();
+		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
 	}
 
 	@Inject(method = "handleInteract", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockEntityInteractions(ServerboundInteractPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.areHandcuffsRestricting(player)) callbackInfo.cancel();
+		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
 	}
 
 	@Inject(method = "handlePlayerAction", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockBlockBreaking(ServerboundPlayerActionPacket packet, CallbackInfo callbackInfo) {
-		if (!NoLewdOtherworldMod.areHandcuffsRestricting(player)) return;
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		ServerboundPlayerActionPacket.Action action = packet.getAction();
 		if (action == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK
 				|| action == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK
-				|| action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK
-				|| action == ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND) callbackInfo.cancel();
+				|| action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) callbackInfo.cancel();
 	}
 
 	@Inject(method = "handleContainerClick", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockEquipmentChanges(ServerboundContainerClickPacket packet, CallbackInfo callbackInfo) {
-		if (!NoLewdOtherworldMod.areHandcuffsRestricting(player)) return;
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		int slotId = packet.slotNum();
 		if (slotId >= 0 && slotId < player.containerMenu.slots.size()) {
 			Slot slot = player.containerMenu.getSlot(slotId);
@@ -64,12 +63,12 @@ public abstract class HandcuffRestrictionsMixin {
 
 	@Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockCommands(ServerboundChatCommandPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.areHandcuffsRestricting(player)) callbackInfo.cancel();
+		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
 	}
 
 	@Inject(method = "handleContainerButtonClick", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockContainerButtons(ServerboundContainerButtonClickPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.areHandcuffsRestricting(player)) callbackInfo.cancel();
+		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
 	}
 
 	private static boolean isEquipmentSlot(Slot slot, int slotId) {

@@ -4,7 +4,6 @@
 	],
 	"slots": [
 		"head/face",
-		"chest/necklace",
-		"hand/glove"
+		"chest/necklace"
 	]
 }

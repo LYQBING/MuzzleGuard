@@ -3,14 +3,14 @@
 	"category": "equipment",
 	"pattern": [
 		"I I",
-		" I ",
-		"I I"
+		"III",
+		"III"
 	],
 	"key": {
 		"I": "minecraft:iron_ingot"
 	},
 	"result": {
-		"id": "no_lewd_otherworld:locked_handcuffs",
+		"id": "no_lewd_otherworld:locked_straitjacket",
 		"count": 1
 	}
 }
