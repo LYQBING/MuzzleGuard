@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
@@ -183,7 +184,10 @@ public final class PlayerLeashManager {
 	private static void returnLead(ServerPlayer holder, Link link) {
 		if (!link.leadConsumed) return;
 		ItemStack lead = new ItemStack(Items.LEAD);
-		if (!holder.getInventory().add(lead)) holder.drop(lead, false);
+		if (!holder.getInventory().add(lead)) {
+			holder.level().addFreshEntity(new ItemEntity(
+					holder.level(), holder.getX(), holder.getY(), holder.getZ(), lead));
+		}
 		link.leadConsumed = false;
 	}
 
