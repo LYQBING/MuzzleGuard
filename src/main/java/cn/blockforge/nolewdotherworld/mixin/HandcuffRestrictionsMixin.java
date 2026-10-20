@@ -38,8 +38,23 @@ public abstract class HandcuffRestrictionsMixin {
 
 	@Inject(method = "handleInteract", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockEntityInteractions(ServerboundInteractPacket packet, CallbackInfo callbackInfo) {
-		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)
-				|| packet.getAction().getType() != ServerboundInteractPacket.ActionType.ATTACK) return;
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
+		boolean[] attacking = {false};
+		packet.dispatch(new ServerboundInteractPacket.Handler() {
+			@Override
+			public void onInteraction(net.minecraft.world.InteractionHand hand) {
+			}
+
+			@Override
+			public void onInteraction(net.minecraft.world.InteractionHand hand, net.minecraft.world.phys.Vec3 location) {
+			}
+
+			@Override
+			public void onAttack() {
+				attacking[0] = true;
+			}
+		});
+		if (!attacking[0]) return;
 		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_attack"));
 		callbackInfo.cancel();
 	}
