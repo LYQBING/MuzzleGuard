@@ -95,7 +95,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			LOCKED_STRAITJACKET_ID,
 			new WearableItem(new Item.Properties()
 					.setId(ResourceKey.create(Registries.ITEM, LOCKED_STRAITJACKET_ID))
-					.component(DataComponents.EQUIPPABLE, net.minecraft.world.item.equipment.Equippable.builder(net.minecraft.world.entity.EquipmentSlot.CHEST).assetId(Identifier.withDefaultNamespace("diamond")).build())
+					.component(DataComponents.EQUIPPABLE, net.minecraft.world.item.equipment.Equippable.builder(net.minecraft.world.entity.EquipmentSlot.CHEST).setAssetId(ResourceKey.create(Registries.EQUIPMENT_ASSET, Identifier.withDefaultNamespace("diamond"))).build())
 					.stacksTo(1), "armor", "chest", true)
 	);
 	public static final Item KEY = Registry.register(
