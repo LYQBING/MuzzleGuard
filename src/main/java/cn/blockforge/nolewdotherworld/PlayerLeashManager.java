@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
@@ -58,7 +59,8 @@ public final class PlayerLeashManager {
 
 		if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 		EntityType<?> allayType = BuiltInRegistries.ENTITY_TYPE.get(
-				Identifier.fromNamespaceAndPath("minecraft", "allay"));
+				Identifier.fromNamespaceAndPath("minecraft", "allay"))
+				.map(Holder.Reference::value).orElse(null);
 		if (allayType == null) return InteractionResult.PASS;
 		if (!(allayType.create(serverLevel, EntitySpawnReason.COMMAND) instanceof Mob anchor)) return InteractionResult.PASS;
 		anchor.setNoAi(true);
