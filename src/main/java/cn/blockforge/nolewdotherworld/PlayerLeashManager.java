@@ -30,9 +30,8 @@ import net.minecraft.world.level.Level;
 public final class PlayerLeashManager {
 	private static final double BREAK_DISTANCE = 10.0;
 	private static final double PULL_START_DISTANCE = 3.0;
+	private static final double PULL_RELEASE_DISTANCE = 2.5;
 	private static final double ANCHOR_HEIGHT = 1.125;
-	private static final double MAX_PULL_SPEED = 0.28;
-	private static final double MAX_PULL_ACCELERATION = 0.035;
 	private static final Map<UUID, Link> LEASHES_BY_TARGET = new HashMap<>();
 
 	private PlayerLeashManager() {
@@ -108,22 +107,19 @@ public final class PlayerLeashManager {
 			link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 			double distance = Math.sqrt(distanceSquared);
 			var velocity = target.getDeltaMovement();
-			if (distance > PULL_START_DISTANCE) {
-				double strength = Math.min(MAX_PULL_ACCELERATION, (distance - PULL_START_DISTANCE) * 0.01);
-				double velocityX = velocity.x + dx / distance * strength;
-				double velocityY = velocity.y + dy / distance * strength;
-				double velocityZ = velocity.z + dz / distance * strength;
-				double pullSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
-				if (pullSpeed > MAX_PULL_SPEED) {
-					double scale = MAX_PULL_SPEED / pullSpeed;
-					velocityX *= scale;
-					velocityY *= scale;
-					velocityZ *= scale;
-				}
-				target.setDeltaMovement(velocityX, velocityY, velocityZ);
+			if (link.pulling ? distance > PULL_RELEASE_DISTANCE : distance > PULL_START_DISTANCE) {
+				link.pulling = true;
+				double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
+				target.setDeltaMovement(velocity.add(
+						dx / distance * strength, dy / distance * strength, dz / distance * strength));
 				target.connection.send(new ClientboundSetEntityMotionPacket(target));
-			} else if (distance > PULL_START_DISTANCE - 0.5) {
-				target.setDeltaMovement(velocity.x * 0.85, velocity.y, velocity.z * 0.85);
+			} else {
+				link.pulling = false;
+				double holderSpeedSquared = holder.getDeltaMovement().horizontalDistanceSqr();
+				if (holderSpeedSquared < 0.0004 && distance < PULL_START_DISTANCE) {
+					target.setDeltaMovement(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
+					target.connection.send(new ClientboundSetEntityMotionPacket(target));
+				}
 			}
 		}
 	}
@@ -152,6 +148,7 @@ public final class PlayerLeashManager {
 	private static final class Link {
 		private final UUID holderId;
 		private final Mob anchor;
+		private boolean pulling;
 
 		private Link(UUID holderId, Mob anchor) {
 			this.holderId = holderId;
