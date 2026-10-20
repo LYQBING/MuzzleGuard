@@ -27,6 +27,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -45,19 +46,19 @@ public final class PlayerLeashManager {
 		UseEntityCallback.EVENT.register(PlayerLeashManager::onUseEntity);
 		ServerTickEvents.END_SERVER_TICK.register(PlayerLeashManager::tick);
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
-			removeLinksFor(handler.player.getUUID()));
+			removeLinksFor(handler.player));
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> clearLinks());
 	}
 
 	private static InteractionResult onUseEntity(Player player, Level world, InteractionHand hand,
 			Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
 		if (isLeashAnchor(entity)) return InteractionResult.SUCCESS;
-		if (!(entity instanceof Player) || !player.getItemInHand(hand).is(Items.LEAD)) {
-			return InteractionResult.PASS;
+		if (!(entity instanceof Player)) return InteractionResult.PASS;
+		boolean holdingLead = player.getItemInHand(hand).is(Items.LEAD);
+		if (world.isClientSide()) return holdingLead ? InteractionResult.SUCCESS : InteractionResult.PASS;
+		if (!(player instanceof ServerPlayer holder) || !(entity instanceof ServerPlayer target)) {
+			return InteractionResult.FAIL;
 		}
-		if (world.isClientSide()) return InteractionResult.SUCCESS;
-		if (!(player instanceof ServerPlayer holder) || !(entity instanceof ServerPlayer target)
-				|| holder == target) return InteractionResult.FAIL;
 
 		Link existing = LEASHES_BY_TARGET.get(target.getUUID());
 		if (existing != null) {
@@ -65,6 +66,7 @@ public final class PlayerLeashManager {
 			removeLink(target.getUUID(), existing);
 			return InteractionResult.SUCCESS;
 		}
+		if (!holdingLead) return InteractionResult.PASS;
 		if (wouldCreateCycle(holder.getUUID(), target.getUUID())) return InteractionResult.FAIL;
 		if (!NoLewdOtherworldMod.canLeashPlayer(holder, target)) return InteractionResult.FAIL;
 
@@ -84,7 +86,9 @@ public final class PlayerLeashManager {
 		anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
-		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder.getUUID(), anchor));
+		boolean leadConsumed = !holder.getAbilities().instabuild;
+		if (leadConsumed) holder.getItemInHand(hand).shrink(1);
+		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder, anchor, leadConsumed));
 		return InteractionResult.SUCCESS;
 	}
 
@@ -114,7 +118,7 @@ public final class PlayerLeashManager {
 			if (target == null || holder == null || target == holder || target.isDeadOrDying()
 					|| holder.isDeadOrDying() || target.level() != holder.level()
 					|| !NoLewdOtherworldMod.isCollarEquipped(target) || link.anchor.isRemoved()) {
-				link.anchor.discard();
+				cleanupLink(link);
 				links.remove();
 				continue;
 			}
@@ -124,7 +128,7 @@ public final class PlayerLeashManager {
 			double dz = holder.getZ() - target.getZ();
 			double distanceSquared = dx * dx + dy * dy + dz * dz;
 			if (distanceSquared > BREAK_DISTANCE * BREAK_DISTANCE) {
-				link.anchor.discard();
+				cleanupLink(link);
 				links.remove();
 				continue;
 			}
@@ -139,7 +143,7 @@ public final class PlayerLeashManager {
 				target.connection.send(new ClientboundSetEntityMotionPacket(target));
 			} else {
 				double holderSpeedSquared = holder.getDeltaMovement().horizontalDistanceSqr();
-				if (holderSpeedSquared < 0.0004 && distance < PULL_START_DISTANCE) {
+				if (holderSpeedSquared < 0.0004) {
 					target.setDeltaMovement(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
 					target.connection.send(new ClientboundSetEntityMotionPacket(target));
 				}
@@ -147,12 +151,13 @@ public final class PlayerLeashManager {
 		}
 	}
 
-	private static void removeLinksFor(UUID playerId) {
+	private static void removeLinksFor(ServerPlayer disconnectingPlayer) {
+		UUID playerId = disconnectingPlayer.getUUID();
 		Iterator<Map.Entry<UUID, Link>> links = LEASHES_BY_TARGET.entrySet().iterator();
 		while (links.hasNext()) {
 			Map.Entry<UUID, Link> entry = links.next();
 			if (entry.getKey().equals(playerId) || entry.getValue().holderId.equals(playerId)) {
-				entry.getValue().anchor.discard();
+				cleanupLink(entry.getValue());
 				links.remove();
 			}
 		}
@@ -160,21 +165,39 @@ public final class PlayerLeashManager {
 
 	private static void removeLink(UUID targetId, Link link) {
 		LEASHES_BY_TARGET.remove(targetId);
+		cleanupLink(link);
+	}
+
+	private static void cleanupLink(Link link) {
 		link.anchor.discard();
+		returnLead(link.holder, link);
 	}
 
 	private static void clearLinks() {
-		for (Link link : LEASHES_BY_TARGET.values()) link.anchor.discard();
+		for (Link link : LEASHES_BY_TARGET.values()) {
+			cleanupLink(link);
+		}
 		LEASHES_BY_TARGET.clear();
+	}
+
+	private static void returnLead(ServerPlayer holder, Link link) {
+		if (!link.leadConsumed) return;
+		ItemStack lead = new ItemStack(Items.LEAD);
+		if (!holder.getInventory().add(lead)) holder.drop(lead, false);
+		link.leadConsumed = false;
 	}
 
 	private static final class Link {
 		private final UUID holderId;
+		private final ServerPlayer holder;
 		private final Mob anchor;
+		private boolean leadConsumed;
 
-		private Link(UUID holderId, Mob anchor) {
-			this.holderId = holderId;
+		private Link(ServerPlayer holder, Mob anchor, boolean leadConsumed) {
+			this.holderId = holder.getUUID();
+			this.holder = holder;
 			this.anchor = anchor;
+			this.leadConsumed = leadConsumed;
 		}
 	}
 }
