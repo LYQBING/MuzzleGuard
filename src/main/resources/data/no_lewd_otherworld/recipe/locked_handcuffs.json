@@ -2,13 +2,12 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		"III",
-		"ICI",
-		"III"
+		"I I",
+		" I ",
+		"I I"
 	],
 	"key": {
-		"I": "minecraft:iron_ingot",
-		"C": "minecraft:chain"
+		"I": "minecraft:iron_ingot"
 	},
 	"result": {
 		"id": "no_lewd_otherworld:locked_handcuffs",
