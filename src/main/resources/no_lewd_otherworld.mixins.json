@@ -4,7 +4,8 @@
 	"package": "cn.blockforge.nolewdotherworld.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"DedicatedServerMixin"
+		"DedicatedServerMixin",
+		"LeashAnchorEntityMixin"
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",

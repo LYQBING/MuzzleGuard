@@ -32,6 +32,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 
 public final class PlayerLeashManager {
 	private static final double BREAK_DISTANCE = 10.0;
@@ -45,6 +47,10 @@ public final class PlayerLeashManager {
 
 	public static void register() {
 		UseEntityCallback.EVENT.register(PlayerLeashManager::onUseEntity);
+		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) ->
+			isLeashAnchor(entity) ? InteractionResult.FAIL : InteractionResult.PASS);
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
+			!isLeashAnchor(entity));
 		ServerTickEvents.END_SERVER_TICK.register(PlayerLeashManager::tick);
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
 			removeLinksFor(handler.player));
@@ -54,6 +60,9 @@ public final class PlayerLeashManager {
 	private static InteractionResult onUseEntity(Player player, Level world, InteractionHand hand,
 			Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
 		if (isLeashAnchor(entity)) return InteractionResult.SUCCESS;
+		if (isLeashFenceKnot(entity) && hasLeashAnchorAttachedTo(entity, world)) {
+			return InteractionResult.SUCCESS;
+		}
 		if (!(entity instanceof Player)) return InteractionResult.PASS;
 		boolean holdingLead = player.getItemInHand(hand).is(Items.LEAD);
 		if (world.isClientSide()) return holdingLead ? InteractionResult.SUCCESS : InteractionResult.PASS;
@@ -62,10 +71,16 @@ public final class PlayerLeashManager {
 		}
 
 		Link existing = LEASHES_BY_TARGET.get(target.getUUID());
+		boolean takingOverFenceLink = false;
 		if (existing != null) {
-			if (!existing.holderId.equals(holder.getUUID())) return InteractionResult.FAIL;
-			removeLink(target.getUUID(), existing);
-			return InteractionResult.SUCCESS;
+			if (existing.holderId.equals(holder.getUUID())) {
+				removeLink(target.getUUID(), existing);
+				return InteractionResult.SUCCESS;
+			}
+			if (!holdingLead || !isLeashFenceKnot(existing.anchor.getLeashHolder())) {
+				return InteractionResult.FAIL;
+			}
+			takingOverFenceLink = true;
 		}
 		if (!holdingLead) return InteractionResult.PASS;
 		if (wouldCreateCycle(holder.getUUID(), target.getUUID())) return InteractionResult.FAIL;
@@ -78,7 +93,9 @@ public final class PlayerLeashManager {
 		if (allayType == null) return InteractionResult.PASS;
 		if (!(allayType.create(serverLevel, EntitySpawnReason.COMMAND) instanceof Mob anchor)) return InteractionResult.PASS;
 		anchor.setNoAi(true);
+		anchor.setNoPhysics(true);
 		anchor.setNoGravity(true);
+		anchor.setInvulnerable(true);
 		anchor.setSilent(true);
 		anchor.setInvisible(true);
 		anchor.setCustomName(Component.literal(ANCHOR_MARKER));
@@ -87,21 +104,22 @@ public final class PlayerLeashManager {
 		anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
+		if (takingOverFenceLink) cleanupLink(existing);
 		boolean leadConsumed = !holder.getAbilities().instabuild;
 		if (leadConsumed) holder.getItemInHand(hand).shrink(1);
 		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder, anchor, leadConsumed));
 		return InteractionResult.SUCCESS;
 	}
 
-	private static boolean isLeashAnchor(Entity entity) {
+	public static boolean isLeashAnchor(Entity entity) {
 		return entity.getCustomName() != null && ANCHOR_MARKER.equals(entity.getCustomName().getString());
 	}
 
 	private static boolean wouldCreateCycle(UUID holderId, UUID targetId) {
 		Set<UUID> visited = new HashSet<>();
-		UUID currentId = targetId;
+		UUID currentId = holderId;
 		while (visited.add(currentId)) {
-			if (currentId.equals(holderId)) return true;
+			if (currentId.equals(targetId)) return true;
 			Link link = LEASHES_BY_TARGET.get(currentId);
 			if (link == null) return false;
 			currentId = link.holderId;
@@ -119,6 +137,17 @@ public final class PlayerLeashManager {
 			if (target == null || holder == null || target == holder || target.isDeadOrDying()
 					|| holder.isDeadOrDying() || target.level() != holder.level()
 					|| !NoLewdOtherworldMod.isCollarEquipped(target) || link.anchor.isRemoved()) {
+				cleanupLink(link);
+				links.remove();
+				continue;
+			}
+
+			Entity leashHolder = link.anchor.getLeashHolder();
+			if (leashHolder != holder) {
+				if (leashHolder != null && isLeashFenceKnot(leashHolder)) {
+					link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
+					continue;
+				}
 				cleanupLink(link);
 				links.remove();
 				continue;
@@ -150,6 +179,16 @@ public final class PlayerLeashManager {
 				}
 			}
 		}
+	}
+
+	private static boolean isLeashFenceKnot(Entity entity) {
+		return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())
+				.equals(Identifier.fromNamespaceAndPath("minecraft", "leash_knot"));
+	}
+
+	private static boolean hasLeashAnchorAttachedTo(Entity leashKnot, Level world) {
+		return !world.getEntitiesOfClass(Mob.class, leashKnot.getBoundingBox().inflate(8.0),
+				anchor -> isLeashAnchor(anchor) && anchor.getLeashHolder() == leashKnot).isEmpty();
 	}
 
 	private static void removeLinksFor(ServerPlayer disconnectingPlayer) {
