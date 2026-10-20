@@ -15,6 +15,8 @@
 	"message.no_lewd_otherworld.equip_failed": "无法装备：对应饰品槽可能已被占用。",
 	"item.no_lewd_otherworld.locked_collar": "挂锁项圈",
 	"item.no_lewd_otherworld.locked_collar.desc": "可佩戴在项链饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
+	"item.no_lewd_otherworld.locked_handcuffs": "挂锁手铐",
+	"item.no_lewd_otherworld.locked_handcuffs.desc": "可佩戴在手套饰品槽。用钥匙锁定后，无法攻击、使用物品或方块、破坏方块、调整装备/饰品或使用指令；仍可移动、转动视角、聊天、整理背包和丢弃物品。解锁后恢复正常。",
 	"item.no_lewd_otherworld.key": "钥匙",
 	"item.no_lewd_otherworld.key.desc": "右键自己或其他玩家，绑定一个未绑定的挂锁饰品；再次使用可切换已绑定饰品的锁定状态。",
 	"message.no_lewd_otherworld.key_bound_to": "此钥匙已绑定到 %s。",

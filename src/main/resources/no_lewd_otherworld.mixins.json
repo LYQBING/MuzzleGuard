@@ -6,7 +6,8 @@
 	"mixins": [
 		"DedicatedServerMixin",
 		"LeashAnchorEntityMixin",
-		"LeashAnchorCollisionMixin"
+		"LeashAnchorCollisionMixin",
+		"HandcuffRestrictionsMixin"
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",

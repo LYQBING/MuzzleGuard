@@ -15,6 +15,8 @@
 	"message.no_lewd_otherworld.equip_failed": "Could not equip: the matching trinket slot may already be occupied.",
 	"item.no_lewd_otherworld.locked_collar": "Padlocked Collar",
 	"item.no_lewd_otherworld.locked_collar.desc": "Wear in the necklace trinket slot. Unlocked by default; bind and toggle it with a key.",
+	"item.no_lewd_otherworld.locked_handcuffs": "Padlocked Handcuffs",
+	"item.no_lewd_otherworld.locked_handcuffs.desc": "Wear in the glove trinket slot. When locked, prevents attacking, using items or blocks, breaking blocks, changing equipment/trinkets, and using commands. Movement, looking, chat, inventory organization, and dropping items remain allowed; normal behavior returns when unlocked.",
 	"item.no_lewd_otherworld.key": "Key",
 	"item.no_lewd_otherworld.key.desc": "Use on yourself or another player to bind an unbound padlocked trinket; use it again to toggle the bound trinket's lock.",
 	"message.no_lewd_otherworld.key_bound_to": "This key is now bound to %s.",

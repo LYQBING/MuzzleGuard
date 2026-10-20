@@ -55,6 +55,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static final Identifier LOCKED_RING_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_ring_gag");
 	private static final Identifier COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "collar");
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_collar");
+	private static final Identifier LOCKED_HANDCUFFS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_handcuffs");
 	private static final Identifier KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "key");
 	private static final Identifier MASTER_KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "master_key");
 	private static final Identifier SHOCK_CONTROLLER_ID = Identifier.fromNamespaceAndPath(MOD_ID, "shock_controller");
@@ -87,6 +88,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	public static final Item LOCKED_RING_GAG = registerWearable(LOCKED_RING_GAG_ID, "head", "face");
 	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
 	public static final Item LOCKED_COLLAR = registerWearable(LOCKED_COLLAR_ID, "chest", "necklace");
+	public static final Item LOCKED_HANDCUFFS = registerWearable(LOCKED_HANDCUFFS_ID, "hand", "glove");
 	public static final Item KEY = Registry.register(
 			BuiltInRegistries.ITEM,
 			KEY_ID,
@@ -129,6 +131,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 							entries.accept(LOCKED_RING_GAG);
 							entries.accept(COLLAR);
 							entries.accept(LOCKED_COLLAR);
+							entries.accept(LOCKED_HANDCUFFS);
 							entries.accept(KEY);
 							entries.accept(MASTER_KEY);
 							entries.accept(SHOCK_CONTROLLER);
@@ -177,14 +180,18 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		return false;
 	}
 
+	public static boolean isUnlockKey(ItemStack stack) {
+		return stack.is(KEY) || stack.is(MASTER_KEY);
+	}
+
 	private static boolean removeLockBinding(Player actor, Player target) {
 		TrinketAttachment attachment = TrinketsApi.getAttachment(target);
-		for (String slot : new String[]{"head/face", "chest/necklace"}) {
+		for (String slot : new String[]{"head/face", "chest/necklace", "hand/glove"}) {
 			TrinketInventory inventory = attachment.getInventory(slot);
 			if (inventory == null) continue;
 			for (int index = 0; index < inventory.getContainerSize(); index++) {
 				ItemStack worn = inventory.getItem(index);
-				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_BALL_GAG) || worn.is(LOCKED_RING_GAG))) continue;
+				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_BALL_GAG) || worn.is(LOCKED_RING_GAG) || worn.is(LOCKED_HANDCUFFS))) continue;
 				CompoundTag data = customData(worn);
 				data.remove(BOUND_KEY_UUID);
 				data.remove(LOCKED);
@@ -211,7 +218,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		@Override
 		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, java.util.function.Consumer<Component> textConsumer, TooltipFlag flag) {
 			super.appendHoverText(stack, context, display, textConsumer, flag);
-			if (this != LOCKED_BALL_GAG && this != LOCKED_RING_GAG && this != LOCKED_COLLAR) return;
+			if (this != LOCKED_BALL_GAG && this != LOCKED_RING_GAG && this != LOCKED_COLLAR && this != LOCKED_HANDCUFFS) return;
 
 			CompoundTag data = customData(stack);
 			String boundKey = data.getString(BOUND_KEY_UUID).orElse("");
@@ -413,6 +420,17 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		return getEquippedCollar(player) != null;
 	}
 
+	public static boolean areHandcuffsRestricting(Player player) {
+		if (!isEquipped(player, LOCKED_HANDCUFFS)) return false;
+		TrinketInventory inventory = getTrinketInventory(player, "hand/glove");
+		if (inventory == null) return false;
+		for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+			ItemStack stack = inventory.getItem(slot);
+			if (stack.is(LOCKED_HANDCUFFS)) return customData(stack).getBoolean(LOCKED).orElse(false);
+		}
+		return false;
+	}
+
 	public static boolean canLeashPlayer(Player holder, Player target) {
 		ItemStack collar = getEquippedCollar(target);
 		if (collar == null) return false;
@@ -473,7 +491,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		String id = customData(key).getString(KEY_UUID).orElse("");
 		String boundKeyId = id;
 		List<LockCandidate> candidates = new ArrayList<>();
-		for (String slot : new String[]{"head/face", "chest/necklace"}) {
+		for (String slot : new String[]{"head/face", "chest/necklace", "hand/glove"}) {
 			TrinketInventory inventory = getTrinketInventory(target, slot);
 			if (inventory == null) continue;
 			for (int index = 0; index < inventory.getContainerSize(); index++) {
@@ -516,8 +534,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		return true;
 	}
 
-	private static boolean isLockableTrinket(ItemStack stack) {
-		return !stack.isEmpty() && (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR));
+	public static boolean isLockableTrinket(ItemStack stack) {
+		return !stack.isEmpty() && (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR) || stack.is(LOCKED_HANDCUFFS));
 	}
 
 	private static final class LockCandidate {
@@ -561,7 +579,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static void registerTrinketRules() {
 		// Register rule to prevent unequipping when locked
 		TrinketCanUnequipCallback.EVENT.register((stack, slot, entity, canUnequipDefault) -> {
-			if (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR)) {
+			if (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR) || stack.is(LOCKED_HANDCUFFS)) {
 				return customData(stack).getBoolean(LOCKED).orElse(false) ? TriState.FALSE : TriState.DEFAULT;
 			}
 			return TriState.DEFAULT;
