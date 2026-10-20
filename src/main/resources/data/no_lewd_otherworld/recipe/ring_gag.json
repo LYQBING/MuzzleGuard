@@ -2,13 +2,13 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		" L ",
+		"   ",
 		"LSL",
-		" L "
+		"   "
 	],
 	"key": {
 		"L": "minecraft:leather",
-		"S": "minecraft:string"
+		"S": "minecraft:iron_ingot"
 	},
 	"result": {
 		"id": "no_lewd_otherworld:ring_gag",
