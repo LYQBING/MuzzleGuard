@@ -13,4 +13,9 @@ public abstract class LeashAnchorEntityMixin {
 	private void noLewdOtherworld$makeLeashAnchorUnpickable(CallbackInfoReturnable<Boolean> callbackInfo) {
 		if (PlayerLeashManager.isLeashAnchor((Entity) (Object) this)) callbackInfo.setReturnValue(false);
 	}
+
+	@Inject(method = "isPushable", at = @At("HEAD"), cancellable = true)
+	private void noLewdOtherworld$makeLeashAnchorUnpushable(CallbackInfoReturnable<Boolean> callbackInfo) {
+		if (PlayerLeashManager.isLeashAnchor((Entity) (Object) this)) callbackInfo.setReturnValue(false);
+	}
 }

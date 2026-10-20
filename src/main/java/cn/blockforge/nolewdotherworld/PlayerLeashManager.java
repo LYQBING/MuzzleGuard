@@ -93,9 +93,7 @@ public final class PlayerLeashManager {
 		if (allayType == null) return InteractionResult.PASS;
 		if (!(allayType.create(serverLevel, EntitySpawnReason.COMMAND) instanceof Mob anchor)) return InteractionResult.PASS;
 		anchor.setNoAi(true);
-		anchor.setNoPhysics(true);
 		anchor.setNoGravity(true);
-		anchor.setInvulnerable(true);
 		anchor.setSilent(true);
 		anchor.setInvisible(true);
 		anchor.setCustomName(Component.literal(ANCHOR_MARKER));
