@@ -74,7 +74,6 @@ public final class PlayerLeashManager {
 			boolean attachedToFence = isLeashFenceKnot(existing.anchor.getLeashHolder());
 			if (existing.holderId.equals(holder.getUUID())) {
 				if (attachedToFence) return InteractionResult.SUCCESS;
-				if (!holdingLead) return InteractionResult.PASS;
 				removeLink(target.getUUID(), existing);
 				return InteractionResult.SUCCESS;
 			}
@@ -161,6 +160,7 @@ public final class PlayerLeashManager {
 			Entity leashHolder = link.anchor.getLeashHolder();
 			if (isLeashFenceKnot(leashHolder)) {
 				link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
+				link.anchor.setDeltaMovement(0.0, 0.0, 0.0);
 				continue;
 			}
 			if (!(leashHolder instanceof ServerPlayer holder) || holder == target
