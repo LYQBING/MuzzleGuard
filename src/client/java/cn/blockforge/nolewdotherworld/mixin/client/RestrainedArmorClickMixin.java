@@ -8,10 +8,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ArmorSlot;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.component.DataComponents;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.Coerce;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class RestrainedArmorClickMixin {
 	@Inject(method = "handleInventoryMouseClick", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockRestrictedArmorClick(int containerId, int slotId, int button,
-			ClickType clickType, Player player, CallbackInfo callbackInfo) {
+			@Coerce Object clickType, Player player, CallbackInfo callbackInfo) {
 		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		if (player.containerMenu.containerId != containerId) return;
 
@@ -34,9 +35,10 @@ public abstract class RestrainedArmorClickMixin {
 			boolean armorSlot = slot instanceof ArmorSlot;
 			removingStraitjacket = clicked.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)
 					|| player.containerMenu.getCarried().is(NoLewdOtherworldMod.LOCKED_STRAITJACKET);
+			String clickMode = clickType instanceof Enum<?> clickEnum ? clickEnum.name() : "";
 			blocked = armorSlot || removingStraitjacket
-					|| (armorItem && (clickType == ClickType.QUICK_MOVE
-							|| (clickType == ClickType.PICKUP && button == 1)));
+					|| (armorItem && ("QUICK_MOVE".equals(clickMode)
+							|| ("PICKUP".equals(clickMode) && button == 1)));
 		} else if (slotId == -999) {
 			blocked = player.containerMenu.getCarried().is(NoLewdOtherworldMod.LOCKED_STRAITJACKET);
 			removingStraitjacket = blocked;

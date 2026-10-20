@@ -9,9 +9,7 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.ArmorSlot;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.component.DataComponents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -67,14 +65,6 @@ public abstract class HandcuffRestrictionsMixin {
 				affectsStraitjacket = true;
 			}
 		}
-		ItemStack clicked = slotId >= 0 && slotId < player.containerMenu.slots.size()
-				? player.containerMenu.getSlot(slotId).getItem() : ItemStack.EMPTY;
-		if ((isArmorItem(clicked) && (packet.clickType() == ClickType.QUICK_MOVE
-				|| (packet.clickType() == ClickType.PICKUP && packet.buttonNum() == 1)))
-				|| (isArmorItem(cursor) && slotId >= 0 && slotId < player.containerMenu.slots.size()
-						&& player.containerMenu.getSlot(slotId) instanceof ArmorSlot)) {
-			affectsArmor = true;
-		}
 		if (affectsStraitjacket || affectsArmor) {
 			player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(affectsStraitjacket
 					? "message.no_lewd_otherworld.restrained_unequip"
@@ -82,11 +72,6 @@ public abstract class HandcuffRestrictionsMixin {
 			player.containerMenu.broadcastFullState();
 			callbackInfo.cancel();
 		}
-	}
-
-	private static boolean isArmorItem(ItemStack stack) {
-		var equippable = stack.get(DataComponents.EQUIPPABLE);
-		return equippable != null && equippable.slot().isArmor();
 	}
 
 	@Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
