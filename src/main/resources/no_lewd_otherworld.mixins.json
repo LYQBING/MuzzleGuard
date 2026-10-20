@@ -6,13 +6,11 @@
 	"mixins": [
 		"DedicatedServerMixin",
 		"LeashAnchorEntityMixin",
-		"LeashAnchorCollisionMixin",
-		"HandcuffRestrictionsMixin"
+		"LeashAnchorCollisionMixin"
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.BlockSingleplayerScreenMixin",
-		"client.RestrainedArmorClickMixin"
+		"client.BlockSingleplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

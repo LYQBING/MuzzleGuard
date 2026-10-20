@@ -2,15 +2,16 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "equipment",
 	"pattern": [
-		"I I",
-		"III",
-		"III"
+		"   ",
+		"LBL",
+		"   "
 	],
 	"key": {
-		"I": "minecraft:iron_ingot"
+		"L": "minecraft:leather",
+		"B": "minecraft:bone"
 	},
 	"result": {
-		"id": "no_lewd_otherworld:locked_straitjacket",
+		"id": "no_lewd_otherworld:bit_gag",
 		"count": 1
 	}
 }
