@@ -49,8 +49,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
 	private static final String LOCKED = "muzzle_guard_locked";
 	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
-	private static final Identifier MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "muzzle");
-	private static final Identifier LOCKED_MUZZLE_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_muzzle");
+	private static final Identifier BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "ball_gag");
+	private static final Identifier LOCKED_BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_ball_gag");
 	private static final Identifier COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "collar");
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_collar");
 	private static final Identifier KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "key");
@@ -72,15 +72,15 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 					.setId(ResourceKey.create(Registries.ITEM, SHOCK_CONTROLLER_ID))
 					.stacksTo(1))
 	);
-	public static final Item MUZZLE = Registry.register(
+	public static final Item BALL_GAG = Registry.register(
 			BuiltInRegistries.ITEM,
-			MUZZLE_ID,
+			BALL_GAG_ID,
 			new WearableItem(new Item.Properties()
-					.setId(ResourceKey.create(Registries.ITEM, MUZZLE_ID))
+					.setId(ResourceKey.create(Registries.ITEM, BALL_GAG_ID))
 					.component(TrinketDataComponents.EQUIPMENT, TrinketEquippable.DEFAULT.withSlots("head/face"))
 					.stacksTo(1), "head", "face")
 	);
-	public static final Item LOCKED_MUZZLE = registerWearable(LOCKED_MUZZLE_ID, "head", "face");
+	public static final Item LOCKED_BALL_GAG = registerWearable(LOCKED_BALL_GAG_ID, "head", "face");
 	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
 	public static final Item LOCKED_COLLAR = registerWearable(LOCKED_COLLAR_ID, "chest", "necklace");
 	public static final Item KEY = Registry.register(
@@ -117,10 +117,10 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 				Identifier.fromNamespaceAndPath(MOD_ID, "main"),
 				CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
 				.title(Component.translatable("itemGroup.no_lewd_otherworld"))
-						.icon(() -> new ItemStack(MUZZLE))
+						.icon(() -> new ItemStack(BALL_GAG))
 						.displayItems((context, entries) -> {
-							entries.accept(MUZZLE);
-							entries.accept(LOCKED_MUZZLE);
+							entries.accept(BALL_GAG);
+							entries.accept(LOCKED_BALL_GAG);
 							entries.accept(COLLAR);
 							entries.accept(LOCKED_COLLAR);
 							entries.accept(KEY);
@@ -131,7 +131,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 						.build()
 		);
 		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
-			if (!isMuzzleEquipped(sender)) {
+			if (!isBallGagEquipped(sender)) {
 				return true;
 			}
 
@@ -178,7 +178,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 			if (inventory == null) continue;
 			for (int index = 0; index < inventory.getContainerSize(); index++) {
 				ItemStack worn = inventory.getItem(index);
-				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_MUZZLE))) continue;
+				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_BALL_GAG))) continue;
 				CompoundTag data = customData(worn);
 				data.remove(BOUND_KEY_UUID);
 				data.remove(LOCKED);
@@ -205,7 +205,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		@Override
 		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, java.util.function.Consumer<Component> textConsumer, TooltipFlag flag) {
 			super.appendHoverText(stack, context, display, textConsumer, flag);
-			if (this != LOCKED_MUZZLE && this != LOCKED_COLLAR) return;
+			if (this != LOCKED_BALL_GAG && this != LOCKED_COLLAR) return;
 
 			CompoundTag data = customData(stack);
 			String boundKey = data.getString(BOUND_KEY_UUID).orElse("");
@@ -437,8 +437,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		if (inventory != null) inventory.setChanged();
 	}
 
-	private static boolean isMuzzleEquipped(Player player) {
-		return isEquipped(player, MUZZLE) || isEquipped(player, LOCKED_MUZZLE);
+	private static boolean isBallGagEquipped(Player player) {
+		return isEquipped(player, BALL_GAG) || isEquipped(player, LOCKED_BALL_GAG);
 	}
 
 	private static boolean isEquipped(Player player, Item item) {
@@ -510,7 +510,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	}
 
 	private static boolean isLockableTrinket(ItemStack stack) {
-		return !stack.isEmpty() && (stack.is(LOCKED_MUZZLE) || stack.is(LOCKED_COLLAR));
+		return !stack.isEmpty() && (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_COLLAR));
 	}
 
 	private static final class LockCandidate {
@@ -554,7 +554,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static void registerTrinketRules() {
 		// Register rule to prevent unequipping when locked
 		TrinketCanUnequipCallback.EVENT.register((stack, slot, entity, canUnequipDefault) -> {
-			if (stack.is(LOCKED_MUZZLE) || stack.is(LOCKED_COLLAR)) {
+			if (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_COLLAR)) {
 				return customData(stack).getBoolean(LOCKED).orElse(false) ? TriState.FALSE : TriState.DEFAULT;
 			}
 			return TriState.DEFAULT;

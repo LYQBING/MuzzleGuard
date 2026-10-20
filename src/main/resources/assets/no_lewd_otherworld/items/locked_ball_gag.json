@@ -7,13 +7,13 @@
 				"when": "none",
 				"model": {
 					"type": "minecraft:model",
-					"model": "no_lewd_otherworld:item/locked_muzzle_face"
+					"model": "no_lewd_otherworld:item/locked_ball_gag_face"
 				}
 			}
 		],
 		"fallback": {
 			"type": "minecraft:model",
-			"model": "no_lewd_otherworld:item/locked_muzzle"
+			"model": "no_lewd_otherworld:item/locked_ball_gag"
 		}
 	}
 }

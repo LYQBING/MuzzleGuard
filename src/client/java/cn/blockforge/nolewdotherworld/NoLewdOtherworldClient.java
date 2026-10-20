@@ -16,8 +16,8 @@ import org.joml.Matrix4f;
 public final class NoLewdOtherworldClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.MUZZLE, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_MUZZLE, renderer(true));
+		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.BALL_GAG, renderer(true));
+		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_BALL_GAG, renderer(true));
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.COLLAR, renderer(false));
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_COLLAR, renderer(false));
 	}

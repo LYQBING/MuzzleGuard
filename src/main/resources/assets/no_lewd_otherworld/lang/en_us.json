@@ -1,8 +1,8 @@
 {
-	"item.no_lewd_otherworld.muzzle": "Gag",
-	"item.no_lewd_otherworld.muzzle.desc": "Wear in the face trinket slot. Blocks mouth-related animations and replaces ordinary chat with muffled syllables.",
-	"item.no_lewd_otherworld.locked_muzzle": "Padlocked Gag",
-	"item.no_lewd_otherworld.locked_muzzle.desc": "Wear in the face trinket slot. Unlocked by default; bind and toggle it with a key.",
+	"item.no_lewd_otherworld.ball_gag": "Ball Gag",
+	"item.no_lewd_otherworld.ball_gag.desc": "Wear in the face trinket slot. Prevents normal speech and blocks mouth-related animations.",
+	"item.no_lewd_otherworld.locked_ball_gag": "Padlocked Ball Gag",
+	"item.no_lewd_otherworld.locked_ball_gag.desc": "Wear in the face trinket slot. Unlocked by default; bind and toggle it with a key.",
 	"item.no_lewd_otherworld.collar": "Collar",
 	"item.no_lewd_otherworld.collar.desc": "Wear in the necklace trinket slot.",
 	"message.no_lewd_otherworld.equipped_self": "You put on the trinket.",
@@ -46,5 +46,5 @@
 	"message.no_lewd_otherworld.authorization_list_disabled": "The authorization list is disabled. The list change was saved, but all players are currently unrestricted.",
 	"item.no_lewd_otherworld.lockbox_photo": "Keepsake Necklace",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "A keepsake of a cherished bond, refusing to break the promise between you.",
-	"itemGroup.no_lewd_otherworld": "Gags and Collars"
+	"itemGroup.no_lewd_otherworld": "Ball Gags and Collars"
 }

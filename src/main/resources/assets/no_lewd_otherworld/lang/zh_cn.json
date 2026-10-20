@@ -1,8 +1,8 @@
 {
-	"item.no_lewd_otherworld.muzzle": "口球",
-	"item.no_lewd_otherworld.muzzle.desc": "可佩戴在面部饰品槽。阻止口部相关动画，聊天会被转成呜啊哇喵等拟声词。",
-	"item.no_lewd_otherworld.locked_muzzle": "挂锁口球",
-	"item.no_lewd_otherworld.locked_muzzle.desc": "可佩戴在面部饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
+	"item.no_lewd_otherworld.ball_gag": "口球",
+	"item.no_lewd_otherworld.ball_gag.desc": "可佩戴在面部饰品槽。无法正常说话，并阻止口部相关动画。",
+	"item.no_lewd_otherworld.locked_ball_gag": "挂锁口球",
+	"item.no_lewd_otherworld.locked_ball_gag.desc": "可佩戴在面部饰品槽。默认可卸下；用钥匙绑定后可锁定或解锁。",
 	"item.no_lewd_otherworld.collar": "项圈",
 	"item.no_lewd_otherworld.collar.desc": "可佩戴在项链饰品槽。",
 	"message.no_lewd_otherworld.equipped_self": "你已戴上饰品。",
