@@ -11,7 +11,8 @@
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.BlockSingleplayerScreenMixin"
+		"client.BlockSingleplayerScreenMixin",
+		"client.RestrainedArmorClickMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
