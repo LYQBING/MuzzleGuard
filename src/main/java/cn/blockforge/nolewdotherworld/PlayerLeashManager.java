@@ -161,6 +161,38 @@ public final class PlayerLeashManager {
 			if (isLeashFenceKnot(leashHolder)) {
 				link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 				link.anchor.setDeltaMovement(0.0, 0.0, 0.0);
+
+				double dx = leashHolder.getX() - target.getX();
+				double dy = leashHolder.getY() + 0.5 - (target.getY() + 1.0);
+				double dz = leashHolder.getZ() - target.getZ();
+				double distanceSquared = dx * dx + dy * dy + dz * dz;
+				if (distanceSquared > BREAK_DISTANCE * BREAK_DISTANCE) {
+					cleanupLink(link);
+					links.remove();
+					continue;
+				}
+
+				double distance = Math.sqrt(distanceSquared);
+				if (distance > 1.0E-6) {
+					var velocity = target.getDeltaMovement();
+					double towardKnotSpeed = (velocity.x * dx + velocity.y * dy + velocity.z * dz) / distance;
+					boolean motionChanged = false;
+					if (towardKnotSpeed < 0.0) {
+						velocity = velocity.add(dx / distance * -towardKnotSpeed,
+								dy / distance * -towardKnotSpeed, dz / distance * -towardKnotSpeed);
+						motionChanged = true;
+					}
+					if (distance > PULL_START_DISTANCE) {
+						double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
+						velocity = velocity.add(dx / distance * strength,
+								dy / distance * strength, dz / distance * strength);
+						motionChanged = true;
+					}
+					if (motionChanged) {
+						target.setDeltaMovement(velocity);
+						target.connection.send(new ClientboundSetEntityMotionPacket(target));
+					}
+				}
 				continue;
 			}
 			if (!(leashHolder instanceof ServerPlayer holder) || holder == target
