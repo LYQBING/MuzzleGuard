@@ -1,19 +1,14 @@
 package cn.blockforge.nolewdotherworld.mixin;
 
 import cn.blockforge.nolewdotherworld.NoLewdOtherworldMod;
-import eu.pb4.trinkets.api.TrinketInventory;
-import eu.pb4.trinkets.api.component.TrinketDataComponents;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
-import net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,18 +23,25 @@ public abstract class HandcuffRestrictionsMixin {
 	@Inject(method = "handleUseItem", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockUseItem(ServerboundUseItemPacket packet, CallbackInfo callbackInfo) {
 		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
-		if (NoLewdOtherworldMod.isUnlockKey(player.getItemInHand(packet.hand()))) return;
-		callbackInfo.cancel();
+		if (!NoLewdOtherworldMod.isUnlockKey(player.getItemInHand(packet.hand()))) {
+			player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_use"));
+			callbackInfo.cancel();
+		}
 	}
 
 	@Inject(method = "handleUseItemOn", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockUseItemOn(ServerboundUseItemOnPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
+		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_use"));
+		callbackInfo.cancel();
 	}
 
 	@Inject(method = "handleInteract", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockEntityInteractions(ServerboundInteractPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)
+				|| packet.getAction().getType() != ServerboundInteractPacket.ActionType.ATTACK) return;
+		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_attack"));
+		callbackInfo.cancel();
 	}
 
 	@Inject(method = "handlePlayerAction", at = @At("HEAD"), cancellable = true)
@@ -48,49 +50,44 @@ public abstract class HandcuffRestrictionsMixin {
 		ServerboundPlayerActionPacket.Action action = packet.getAction();
 		if (action == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK
 				|| action == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK
-				|| action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) callbackInfo.cancel();
+				|| action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
+			if (action == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
+				player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_break"));
+			}
+			callbackInfo.cancel();
+		}
 	}
 
 	@Inject(method = "handleContainerClick", at = @At("HEAD"), cancellable = true)
-	private void noLewdOtherworld$blockEquipmentChanges(ServerboundContainerClickPacket packet, CallbackInfo callbackInfo) {
+	private void noLewdOtherworld$blockStraitjacketRemoval(ServerboundContainerClickPacket packet, CallbackInfo callbackInfo) {
 		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
 		int slotId = packet.slotNum();
+		ItemStack cursor = player.containerMenu.getCarried();
+		if (slotId == -999 && cursor.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
+			player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
+			callbackInfo.cancel();
+			return;
+		}
 		if (slotId >= 0 && slotId < player.containerMenu.slots.size()) {
-			Slot slot = player.containerMenu.getSlot(slotId);
-			if (isEquipmentSlot(slot, slotId) || isEquipmentQuickMove(packet, slot)) callbackInfo.cancel();
+			ItemStack clicked = player.containerMenu.getSlot(slotId).getItem();
+			if (clicked.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
+				player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
+				callbackInfo.cancel();
+				return;
+			}
+		}
+		if (packet.slotNum() >= 0 && packet.slotNum() < player.containerMenu.slots.size()) {
+			if (cursor.is(NoLewdOtherworldMod.LOCKED_STRAITJACKET)) {
+				player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_unequip"));
+				callbackInfo.cancel();
+			}
 		}
 	}
 
 	@Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockCommands(ServerboundChatCommandPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
-	}
-
-	@Inject(method = "handleContainerButtonClick", at = @At("HEAD"), cancellable = true)
-	private void noLewdOtherworld$blockContainerButtons(ServerboundContainerButtonClickPacket packet, CallbackInfo callbackInfo) {
-		if (NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) callbackInfo.cancel();
-	}
-
-	private static boolean isEquipmentSlot(Slot slot, int slotId) {
-		return (slotId >= 5 && slotId <= 8) || slotId == 45 || slot.container instanceof TrinketInventory;
-	}
-
-	private static boolean isEquipmentQuickMove(ServerboundContainerClickPacket packet, Slot slot) {
-		if (!isQuickMove(packet)) return false;
-		ItemStack stack = slot.getItem();
-		return stack.has(DataComponents.EQUIPPABLE) || stack.has(TrinketDataComponents.EQUIPMENT);
-	}
-
-	private static boolean isQuickMove(ServerboundContainerClickPacket packet) {
-		for (var method : packet.getClass().getMethods()) {
-			if (method.getParameterCount() != 0 || !method.getReturnType().isEnum()) continue;
-			try {
-				Object value = method.invoke(packet);
-				if (value != null && value.toString().equals("QUICK_MOVE")) return true;
-			} catch (ReflectiveOperationException ignored) {
-				return false;
-			}
-		}
-		return false;
+		if (!NoLewdOtherworldMod.isRestrainedByStraitjacket(player)) return;
+		player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.no_lewd_otherworld.restrained_command"));
+		callbackInfo.cancel();
 	}
 }
