@@ -18,6 +18,8 @@ public final class NoLewdOtherworldClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.BALL_GAG, renderer(true));
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_BALL_GAG, renderer(true));
+		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.RING_GAG, renderer(true));
+		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_RING_GAG, renderer(true));
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.COLLAR, renderer(false));
 		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_COLLAR, renderer(false));
 	}
