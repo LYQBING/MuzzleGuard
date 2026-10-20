@@ -60,9 +60,7 @@ public final class PlayerLeashManager {
 	private static InteractionResult onUseEntity(Player player, Level world, InteractionHand hand,
 			Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
 		if (isLeashAnchor(entity)) return InteractionResult.SUCCESS;
-		if (isLeashFenceKnot(entity) && hasLeashAnchorAttachedTo(entity, world)) {
-			return InteractionResult.SUCCESS;
-		}
+		if (isLeashFenceKnot(entity)) return onUseLeashKnot(player, world, entity);
 		if (!(entity instanceof Player)) return InteractionResult.PASS;
 		boolean holdingLead = player.getItemInHand(hand).is(Items.LEAD);
 		if (world.isClientSide()) return holdingLead ? InteractionResult.SUCCESS : InteractionResult.PASS;
@@ -73,11 +71,15 @@ public final class PlayerLeashManager {
 		Link existing = LEASHES_BY_TARGET.get(target.getUUID());
 		boolean takingOverFenceLink = false;
 		if (existing != null) {
+			boolean attachedToFence = isLeashFenceKnot(existing.anchor.getLeashHolder());
 			if (existing.holderId.equals(holder.getUUID())) {
+				if (attachedToFence) return InteractionResult.SUCCESS;
+				if (!holdingLead) return InteractionResult.PASS;
 				removeLink(target.getUUID(), existing);
 				return InteractionResult.SUCCESS;
 			}
-			if (!holdingLead || !isLeashFenceKnot(existing.anchor.getLeashHolder())) {
+			if (!holdingLead) return InteractionResult.PASS;
+			if (!attachedToFence) {
 				return InteractionResult.FAIL;
 			}
 			takingOverFenceLink = true;
@@ -109,6 +111,24 @@ public final class PlayerLeashManager {
 		return InteractionResult.SUCCESS;
 	}
 
+	private static InteractionResult onUseLeashKnot(Player player, Level world, Entity leashKnot) {
+		if (world.isClientSide()) return InteractionResult.PASS;
+		if (!(world instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
+			return InteractionResult.FAIL;
+		}
+
+		for (Map.Entry<UUID, Link> entry : LEASHES_BY_TARGET.entrySet()) {
+			if (entry.getValue().anchor.getLeashHolder() != leashKnot) continue;
+			if (entry.getKey().equals(serverPlayer.getUUID())) return InteractionResult.SUCCESS;
+			ServerPlayer target = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
+			if (target == null || wouldCreateCycle(serverPlayer.getUUID(), entry.getKey())
+					|| !NoLewdOtherworldMod.canLeashPlayer(serverPlayer, target)) {
+				return InteractionResult.FAIL;
+			}
+		}
+		return InteractionResult.PASS;
+	}
+
 	public static boolean isLeashAnchor(Entity entity) {
 		return entity.getCustomName() != null && ANCHOR_MARKER.equals(entity.getCustomName().getString());
 	}
@@ -119,7 +139,7 @@ public final class PlayerLeashManager {
 		while (visited.add(currentId)) {
 			if (currentId.equals(targetId)) return true;
 			Link link = LEASHES_BY_TARGET.get(currentId);
-			if (link == null) return false;
+			if (link == null || isLeashFenceKnot(link.anchor.getLeashHolder())) return false;
 			currentId = link.holderId;
 		}
 		return true;
@@ -130,10 +150,8 @@ public final class PlayerLeashManager {
 		while (links.hasNext()) {
 			Map.Entry<UUID, Link> entry = links.next();
 			ServerPlayer target = server.getPlayerList().getPlayer(entry.getKey());
-			ServerPlayer holder = server.getPlayerList().getPlayer(entry.getValue().holderId);
 			Link link = entry.getValue();
-			if (target == null || holder == null || target == holder || target.isDeadOrDying()
-					|| holder.isDeadOrDying() || target.level() != holder.level()
+			if (target == null || target.isDeadOrDying()
 					|| !NoLewdOtherworldMod.isCollarEquipped(target) || link.anchor.isRemoved()) {
 				cleanupLink(link);
 				links.remove();
@@ -141,15 +159,17 @@ public final class PlayerLeashManager {
 			}
 
 			Entity leashHolder = link.anchor.getLeashHolder();
-			if (leashHolder != holder) {
-				if (leashHolder != null && isLeashFenceKnot(leashHolder)) {
-					link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
-					continue;
-				}
+			if (isLeashFenceKnot(leashHolder)) {
+				link.anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
+				continue;
+			}
+			if (!(leashHolder instanceof ServerPlayer holder) || holder == target
+					|| holder.isDeadOrDying() || target.level() != holder.level()) {
 				cleanupLink(link);
 				links.remove();
 				continue;
 			}
+			link.holderId = holder.getUUID();
 
 			double dx = holder.getX() - target.getX();
 			double dy = holder.getY() + 0.8 - (target.getY() + 1.0);
@@ -180,13 +200,8 @@ public final class PlayerLeashManager {
 	}
 
 	private static boolean isLeashFenceKnot(Entity entity) {
-		return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())
+		return entity != null && BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())
 				.equals(Identifier.fromNamespaceAndPath("minecraft", "leash_knot"));
-	}
-
-	private static boolean hasLeashAnchorAttachedTo(Entity leashKnot, Level world) {
-		return !world.getEntitiesOfClass(Mob.class, leashKnot.getBoundingBox().inflate(8.0),
-				anchor -> isLeashAnchor(anchor) && anchor.getLeashHolder() == leashKnot).isEmpty();
 	}
 
 	private static void removeLinksFor(ServerPlayer disconnectingPlayer) {
@@ -194,7 +209,7 @@ public final class PlayerLeashManager {
 		Iterator<Map.Entry<UUID, Link>> links = LEASHES_BY_TARGET.entrySet().iterator();
 		while (links.hasNext()) {
 			Map.Entry<UUID, Link> entry = links.next();
-			if (entry.getKey().equals(playerId) || entry.getValue().holderId.equals(playerId)) {
+			if (entry.getKey().equals(playerId) || entry.getValue().anchor.getLeashHolder() == disconnectingPlayer) {
 				cleanupLink(entry.getValue());
 				links.remove();
 			}
@@ -208,7 +223,7 @@ public final class PlayerLeashManager {
 
 	private static void cleanupLink(Link link) {
 		link.anchor.discard();
-		returnLead(link.holder, link);
+		returnLead(link.leadOwner, link);
 	}
 
 	private static void clearLinks() {
@@ -229,14 +244,14 @@ public final class PlayerLeashManager {
 	}
 
 	private static final class Link {
-		private final UUID holderId;
-		private final ServerPlayer holder;
+		private UUID holderId;
+		private final ServerPlayer leadOwner;
 		private final Mob anchor;
 		private boolean leadConsumed;
 
 		private Link(ServerPlayer holder, Mob anchor, boolean leadConsumed) {
 			this.holderId = holder.getUUID();
-			this.holder = holder;
+			this.leadOwner = holder;
 			this.anchor = anchor;
 			this.leadConsumed = leadConsumed;
 		}
