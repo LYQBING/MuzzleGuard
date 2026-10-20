@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -18,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
@@ -54,14 +57,15 @@ public final class PlayerLeashManager {
 		if (!NoLewdOtherworldMod.isCollarEquipped(target)) return InteractionResult.PASS;
 
 		if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
-		Mob anchor = EntityType.ALLAY.create(serverLevel, EntitySpawnReason.COMMAND);
-		if (anchor == null) return InteractionResult.PASS;
+		EntityType<?> allayType = BuiltInRegistries.ENTITY_TYPE.get(
+				Identifier.fromNamespaceAndPath("minecraft", "allay"));
+		if (allayType == null) return InteractionResult.PASS;
+		if (!(allayType.create(serverLevel, EntitySpawnReason.COMMAND) instanceof Mob anchor)) return InteractionResult.PASS;
 		anchor.setNoAi(true);
 		anchor.setNoGravity(true);
 		anchor.setSilent(true);
-		anchor.setInvulnerable(true);
 		anchor.setInvisible(true);
-		anchor.moveTo(target.getX(), target.getY() + 1.0, target.getZ(), target.getYRot(), target.getXRot());
+		anchor.setPos(target.getX(), target.getY() + 1.0, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
 		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder.getUUID(), anchor));
@@ -93,13 +97,13 @@ public final class PlayerLeashManager {
 				continue;
 			}
 
-			link.anchor.moveTo(target.getX(), target.getY() + 1.0, target.getZ(), target.getYRot(), target.getXRot());
+			link.anchor.setPos(target.getX(), target.getY() + 1.0, target.getZ());
 			double distance = Math.sqrt(distanceSquared);
 			if (distance > PULL_START_DISTANCE) {
 				double strength = Math.min(0.12, (distance - PULL_START_DISTANCE) * 0.04);
 				target.setDeltaMovement(target.getDeltaMovement().add(
 						dx / distance * strength, dy / distance * strength, dz / distance * strength));
-				target.hurtMarked = true;
+				target.connection.send(new ClientboundSetEntityMotionPacket(target));
 			}
 		}
 	}
