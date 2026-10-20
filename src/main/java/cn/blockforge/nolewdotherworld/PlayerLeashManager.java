@@ -1,8 +1,10 @@
 package cn.blockforge.nolewdotherworld;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,6 +18,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +26,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -31,6 +35,7 @@ public final class PlayerLeashManager {
 	private static final double BREAK_DISTANCE = 10.0;
 	private static final double PULL_START_DISTANCE = 3.0;
 	private static final double ANCHOR_HEIGHT = 1.125;
+	private static final String ANCHOR_MARKER = "no_lewd_otherworld:player_leash_anchor";
 	private static final Map<UUID, Link> LEASHES_BY_TARGET = new HashMap<>();
 
 	private PlayerLeashManager() {
@@ -45,7 +50,8 @@ public final class PlayerLeashManager {
 	}
 
 	private static InteractionResult onUseEntity(Player player, Level world, InteractionHand hand,
-			net.minecraft.world.entity.Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
+			Entity entity, net.minecraft.world.phys.EntityHitResult hitResult) {
+		if (isLeashAnchor(entity)) return InteractionResult.SUCCESS;
 		if (!(entity instanceof Player) || !player.getItemInHand(hand).is(Items.LEAD)) {
 			return InteractionResult.PASS;
 		}
@@ -59,9 +65,7 @@ public final class PlayerLeashManager {
 			removeLink(target.getUUID(), existing);
 			return InteractionResult.SUCCESS;
 		}
-		if (LEASHES_BY_TARGET.values().stream().anyMatch(link -> link.holderId.equals(target.getUUID()))) {
-			return InteractionResult.FAIL;
-		}
+		if (wouldCreateCycle(holder.getUUID(), target.getUUID())) return InteractionResult.FAIL;
 		if (!NoLewdOtherworldMod.canLeashPlayer(holder, target)) return InteractionResult.FAIL;
 
 		if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
@@ -74,12 +78,30 @@ public final class PlayerLeashManager {
 		anchor.setNoGravity(true);
 		anchor.setSilent(true);
 		anchor.setInvisible(true);
+		anchor.setCustomName(Component.literal(ANCHOR_MARKER));
+		anchor.setCustomNameVisible(false);
 		anchor.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, -1, 0, true, false, false));
 		anchor.setPos(target.getX(), target.getY() + ANCHOR_HEIGHT, target.getZ());
 		if (!serverLevel.addFreshEntity(anchor)) return InteractionResult.PASS;
 		anchor.setLeashedTo(holder, true);
 		LEASHES_BY_TARGET.put(target.getUUID(), new Link(holder.getUUID(), anchor));
 		return InteractionResult.SUCCESS;
+	}
+
+	private static boolean isLeashAnchor(Entity entity) {
+		return entity.getCustomName() != null && ANCHOR_MARKER.equals(entity.getCustomName().getString());
+	}
+
+	private static boolean wouldCreateCycle(UUID holderId, UUID targetId) {
+		Set<UUID> visited = new HashSet<>();
+		UUID currentId = targetId;
+		while (visited.add(currentId)) {
+			if (currentId.equals(holderId)) return true;
+			Link link = LEASHES_BY_TARGET.get(currentId);
+			if (link == null) return false;
+			currentId = link.holderId;
+		}
+		return true;
 	}
 
 	private static void tick(MinecraftServer server) {
