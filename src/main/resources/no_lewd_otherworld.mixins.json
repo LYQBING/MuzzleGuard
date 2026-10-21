@@ -12,7 +12,7 @@
 	"client": [
 		"client.CreateWorldScreenMixin",
 		"client.BlockSingleplayerScreenMixin",
-		"client.PlayerModelMixin"
+		"client.HandcuffPoseMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
