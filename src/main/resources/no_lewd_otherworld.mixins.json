@@ -3,7 +3,6 @@
 	"minVersion": "0.8",
 	"package": "cn.blockforge.nolewdotherworld.mixin",
 	"compatibilityLevel": "JAVA_25",
-	"refmap": "no_lewd_otherworld.refmap.json",
 	"mixins": [
 		"DedicatedServerMixin",
 		"HandcuffCommandMixin",
@@ -12,8 +11,7 @@
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.BlockSingleplayerScreenMixin",
-		"client.CuffedArmsMixin"
+		"client.BlockSingleplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

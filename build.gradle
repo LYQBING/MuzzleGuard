@@ -17,10 +17,6 @@ repositories {
 
 loom {
 	splitEnvironmentSourceSets()
-	mixin {
-		useLegacyMixinAp = true
-		defaultRefmapName = 'no_lewd_otherworld.refmap.json'
-	}
 	mods {
 		no_lewd_otherworld {
 			sourceSet sourceSets.main
