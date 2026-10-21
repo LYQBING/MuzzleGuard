@@ -173,26 +173,23 @@ public final class LockService {
 	}
 
 	public static boolean removeBinding(Player actor, Player target) {
-		TrinketAttachment attachment = TrinketsApi.getAttachment(target);
-		for (String slot : LOCKABLE_SLOTS) {
-			TrinketInventory inventory = attachment.getInventory(slot);
-			if (inventory == null) continue;
-			for (int index = 0; index < inventory.getContainerSize(); index++) {
-				ItemStack worn = inventory.getItem(index);
-				if (!WearableTags.isLockable(worn)) continue;
-				CompoundTag data = NoLewdOtherworldMod.customData(worn);
-				data.remove(BOUND_KEY_UUID);
-				data.remove(LOCKED);
-				NoLewdOtherworldMod.setCustomData(worn, data);
-				inventory.setChanged();
-				Component result = Component.translatable("message.no_lewd_otherworld.master_key_unlocked");
-				actor.sendSystemMessage(result);
-				if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
-				return true;
-			}
+		int unlockedCount = 0;
+		for (LockCandidate candidate : findCandidates(target)) {
+			if (candidate.boundKey.isEmpty() && !candidate.data.getBoolean(LOCKED).orElse(false)) continue;
+			candidate.data.remove(BOUND_KEY_UUID);
+			candidate.data.remove(LOCKED);
+			NoLewdOtherworldMod.setCustomData(candidate.stack, candidate.data);
+			candidate.inventory.setChanged();
+			unlockedCount++;
 		}
-		actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_no_target"));
-		return false;
+		if (unlockedCount == 0) {
+			actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_no_target"));
+			return false;
+		}
+		Component result = Component.translatable("message.no_lewd_otherworld.master_key_unlocked", unlockedCount);
+		actor.sendSystemMessage(result);
+		if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
+		return true;
 	}
 
 	private static List<LockCandidate> findCandidates(Player target) {
