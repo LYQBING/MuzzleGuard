@@ -2,24 +2,17 @@ package cn.blockforge.nolewdotherworld.mixin.client;
 
 import cn.blockforge.nolewdotherworld.WearableTags;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerModel.class)
 public abstract class CuffedArmsMixin {
-	@Shadow
-	public ModelPart rightArm;
-	@Shadow
-	public ModelPart leftArm;
-
 	@Inject(method = "setupAnim", at = @At("TAIL"))
 	private void noLewdOtherworld$poseCuffedArms(AvatarRenderState state, CallbackInfo callbackInfo) {
 		Minecraft minecraft = Minecraft.getInstance();
@@ -27,9 +20,10 @@ public abstract class CuffedArmsMixin {
 		Entity entity = minecraft.level.getEntity(state.id);
 		if (!(entity instanceof Player player) || !WearableTags.isHandcuffed(player)) return;
 
-		rightArm.xRot = 1.2F;
-		leftArm.xRot = 1.2F;
-		rightArm.yRot = -1.0F;
-		leftArm.yRot = 1.0F;
+		PlayerModel model = (PlayerModel)(Object)this;
+		model.rightArm.xRot = 1.2F;
+		model.leftArm.xRot = 1.2F;
+		model.rightArm.yRot = -1.0F;
+		model.leftArm.yRot = 1.0F;
 	}
 }
