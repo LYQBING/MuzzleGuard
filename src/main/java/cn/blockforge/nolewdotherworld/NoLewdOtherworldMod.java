@@ -39,6 +39,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	public static final String MOD_ID = "no_lewd_otherworld";
 	private static final List<Item> FACE_WEARABLES = new ArrayList<>();
 	private static final List<Item> NECKLACE_WEARABLES = new ArrayList<>();
+	private static final List<Item> OFFHAND_WEARABLES = new ArrayList<>();
 	private static final Identifier BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "ball_gag");
 	private static final Identifier LOCKED_BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_ball_gag");
 	private static final Identifier BIT_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "bit_gag");
@@ -47,6 +48,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	private static final Identifier LOCKED_RING_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_ring_gag");
 	private static final Identifier COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "collar");
 	private static final Identifier LOCKED_COLLAR_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_collar");
+	private static final Identifier HANDCUFFS_ID = Identifier.fromNamespaceAndPath(MOD_ID, "handcuffs");
 	private static final Identifier KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "key");
 	private static final Identifier MASTER_KEY_ID = Identifier.fromNamespaceAndPath(MOD_ID, "master_key");
 	private static final Identifier SHOCK_CONTROLLER_ID = Identifier.fromNamespaceAndPath(MOD_ID, "shock_controller");
@@ -74,6 +76,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	public static final Item LOCKED_RING_GAG = registerWearable(LOCKED_RING_GAG_ID, "head", "face");
 	public static final Item COLLAR = registerWearable(COLLAR_ID, "chest", "necklace");
 	public static final Item LOCKED_COLLAR = registerWearable(LOCKED_COLLAR_ID, "chest", "necklace");
+	public static final Item HANDCUFFS = registerWearable(HANDCUFFS_ID, "offhand", "glove");
 	public static final Item KEY = Registry.register(
 			BuiltInRegistries.ITEM,
 			KEY_ID,
@@ -101,6 +104,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		);
 		if ("head".equals(group) && "face".equals(slot)) FACE_WEARABLES.add(item);
 		if ("chest".equals(group) && "necklace".equals(slot)) NECKLACE_WEARABLES.add(item);
+		if ("offhand".equals(group) && "glove".equals(slot)) OFFHAND_WEARABLES.add(item);
 		return item;
 	}
 
@@ -110,6 +114,10 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 
 	public static List<Item> necklaceWearables() {
 		return List.copyOf(NECKLACE_WEARABLES);
+	}
+
+	public static List<Item> offhandWearables() {
+		return List.copyOf(OFFHAND_WEARABLES);
 	}
 
 	@Override
@@ -123,6 +131,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 						.displayItems((context, entries) -> {
 							faceWearables().forEach(entries::accept);
 							necklaceWearables().forEach(entries::accept);
+							offhandWearables().forEach(entries::accept);
 							entries.accept(KEY);
 							entries.accept(MASTER_KEY);
 							entries.accept(SHOCK_CONTROLLER);
@@ -132,6 +141,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		);
 		GagChatHandler.register();
 		LockService.register();
+		HandcuffRestrictionService.register();
 		PlayerAccessManager.register();
 		PlayerLeashManager.register();
 		registerAnimationBlocker();

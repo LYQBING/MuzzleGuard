@@ -20,7 +20,7 @@ public final class LockService {
 	private static final String KEY_UUID = "muzzle_guard_key";
 	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
 	private static final String LOCKED = "muzzle_guard_locked";
-	private static final List<String> LOCKABLE_SLOTS = List.of("head/face", "chest/necklace");
+	private static final List<String> LOCKABLE_SLOTS = List.of("head/face", "chest/necklace", "offhand/glove");
 
 	private LockService() {
 	}

@@ -16,6 +16,8 @@
 	"item.no_lewd_otherworld.collar.desc": "Wear in the necklace trinket slot.",
 	"item.no_lewd_otherworld.locked_collar": "Padlocked Collar",
 	"item.no_lewd_otherworld.locked_collar.desc": "Wear in the necklace trinket slot. Starts unlocked; bind it with a key to lock or unlock it.",
+	"item.no_lewd_otherworld.handcuffs": "Handcuffs",
+	"item.no_lewd_otherworld.handcuffs.desc": "Wear in the offhand glove trinket slot. Prevents commands, block interactions, tool use, and attacks while worn. Bind it with a key to lock; it cannot be removed while locked.",
 	"item.no_lewd_otherworld.lockbox_photo": "Keepsake Necklace",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "A keepsake of a cherished bond and the promise you share.",
 

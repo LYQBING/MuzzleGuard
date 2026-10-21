@@ -16,6 +16,8 @@
 	"item.no_lewd_otherworld.collar.desc": "佩戴于项链饰品槽。",
 	"item.no_lewd_otherworld.locked_collar": "挂锁项圈",
 	"item.no_lewd_otherworld.locked_collar.desc": "佩戴于项链饰品槽。初始未上锁；用钥匙绑定后，可用同一把钥匙上锁或解锁。",
+	"item.no_lewd_otherworld.handcuffs": "手铐",
+	"item.no_lewd_otherworld.handcuffs.desc": "佩戴于副手手套饰品槽。佩戴期间无法使用指令、方块交互、工具或攻击。用钥匙绑定后可上锁；上锁时无法取下。",
 	"item.no_lewd_otherworld.lockbox_photo": "信物项链",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "纪念珍贵羁绊、守护彼此约定的信物项链。",
 
@@ -39,7 +41,7 @@
 	"message.no_lewd_otherworld.key_no_target": "目标身上没有可绑定或切换状态的饰品。",
 	"message.no_lewd_otherworld.key_no_trinkets": "无法读取目标玩家的饰品栏。",
 	"message.no_lewd_otherworld.key_error": "钥匙操作失败。请查看日志 logs/latest.log 了解详情。",
-	"message.no_lewd_otherworld.master_key_unlocked": "万能钥匙已解除饰品与钥匙的绑定，并解锁该饰品。",
+	"message.no_lewd_otherworld.master_key_unlocked": "已解除当前饰品与原钥匙的绑定关系。",
 
 	"message.no_lewd_otherworld.controller_no_collar": "目标未佩戴项圈。",
 	"message.no_lewd_otherworld.controller_collar_locked": "项圈处于锁定状态：请解锁或持有与其绑定的钥匙后，再进行绑定。",

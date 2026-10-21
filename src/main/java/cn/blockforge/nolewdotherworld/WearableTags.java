@@ -13,6 +13,7 @@ public final class WearableTags {
 	public static final TagKey<Item> GAGS = create("gags");
 	public static final TagKey<Item> LOCKABLES = create("lockables");
 	public static final TagKey<Item> COLLARS = create("collars");
+	public static final TagKey<Item> HANDCUFFS = create("handcuffs");
 
 	private WearableTags() {
 	}
