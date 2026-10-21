@@ -17,6 +17,9 @@ repositories {
 
 loom {
 	splitEnvironmentSourceSets()
+	mixin {
+		defaultRefmapName = 'no_lewd_otherworld.refmap.json'
+	}
 	mods {
 		no_lewd_otherworld {
 			sourceSet sourceSets.main
@@ -28,6 +31,7 @@ loom {
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	annotationProcessor "net.fabricmc:sponge-mixin:0.17.4+mixin.0.8.7"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	implementation "eu.pb4:trinkets:4.2.1+26.3"
 }

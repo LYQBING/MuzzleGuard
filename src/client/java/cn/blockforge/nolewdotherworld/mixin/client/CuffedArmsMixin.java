@@ -27,9 +27,9 @@ public abstract class CuffedArmsMixin {
 		Entity entity = minecraft.level.getEntity(state.id);
 		if (!(entity instanceof Player player) || !WearableTags.isHandcuffed(player)) return;
 
-		rightArm.xRot = -1.25F;
-		leftArm.xRot = -1.25F;
-		rightArm.yRot = -0.15F;
-		leftArm.yRot = 0.15F;
+		rightArm.xRot = 1.2F;
+		leftArm.xRot = 1.2F;
+		rightArm.yRot = -1.0F;
+		leftArm.yRot = 1.0F;
 	}
 }
