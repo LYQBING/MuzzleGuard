@@ -13,6 +13,7 @@ public abstract class HandcuffCommandMixin {
 	@Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockCommandsWhileHandcuffed(ServerboundChatCommandPacket packet, CallbackInfo callbackInfo) {
 		ServerGamePacketListenerImpl listener = (ServerGamePacketListenerImpl) (Object) this;
+		if (packet.command().startsWith("muzzleguarddetails ")) return;
 		if (HandcuffRestrictionService.denyIfHandcuffed(listener.player)) callbackInfo.cancel();
 	}
 }

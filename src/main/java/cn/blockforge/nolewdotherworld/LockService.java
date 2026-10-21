@@ -12,9 +12,13 @@ import eu.pb4.trinkets.api.TrinketsApi;
 import eu.pb4.trinkets.api.event.TrinketCanUnequipCallback;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 
 public final class LockService {
 	private static final String KEY_UUID = "muzzle_guard_key";
@@ -26,6 +30,13 @@ public final class LockService {
 	}
 
 	public static void register() {
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+			dispatcher.register(Commands.literal("muzzleguarddetails")
+					.requires(source -> true)
+					.then(Commands.argument("target", EntityArgument.player())
+							.executes(context -> showDetails(
+									context.getSource().getPlayerOrException(),
+									EntityArgument.getPlayer(context, "target"))))));
 		TrinketCanUnequipCallback.EVENT.register((stack, slot, entity, canUnequipDefault) -> {
 			if (!WearableTags.isLockable(stack)) return TriState.DEFAULT;
 			return isLocked(stack) ? TriState.FALSE : TriState.DEFAULT;
@@ -97,18 +108,45 @@ public final class LockService {
 			Component result = Component.translatable(lock
 					? "message.no_lewd_otherworld.locked_group"
 					: "message.no_lewd_otherworld.unlocked_group", matchingCandidates.size());
-			actor.sendSystemMessage(result);
-			if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
+			sendDetailsLink(actor, target, result);
+			if (!actor.getUUID().equals(target.getUUID())) sendDetailsLink(target, target, result);
 			return true;
 		}
 
 		if (addBinding) return bindUnbound(key, id, actor, target, candidates);
 		if (!boundCandidates.isEmpty()) {
-			actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_bound_elsewhere",
-					boundCandidates.getFirst().stack.getHoverName()));
+			sendDetailsLink(actor, target,
+					Component.translatable("message.no_lewd_otherworld.no_unlockable_trinkets"));
 			return false;
 		}
 		return bindUnbound(key, id, actor, target, candidates);
+	}
+
+	private static void sendDetailsLink(Player viewer, Player target, Component message) {
+		String command = "/muzzleguarddetails " + target.getScoreboardName();
+		viewer.sendSystemMessage(message.copy().append(Component.translatable(
+				"message.no_lewd_otherworld.details_link").withStyle(style ->
+						style.withClickEvent(new ClickEvent.RunCommand(command)).withUnderlined(true))));
+	}
+
+	private static int showDetails(Player viewer, Player target) {
+		viewer.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.trinket_details_header",
+				target.getDisplayName()));
+		List<LockCandidate> candidates = findCandidates(target);
+		if (candidates.isEmpty()) {
+			viewer.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.no_trinkets_worn"));
+			return 1;
+		}
+		for (LockCandidate candidate : candidates) {
+			String status = candidate.boundKey.isEmpty()
+					? "message.no_lewd_otherworld.trinket_unbound"
+					: candidate.data.getBoolean(LOCKED).orElse(false)
+							? "message.no_lewd_otherworld.trinket_locked"
+							: "message.no_lewd_otherworld.trinket_unlocked";
+			viewer.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.trinket_detail_line",
+					candidate.stack.getHoverName(), Component.translatable(status)));
+		}
+		return 1;
 	}
 
 	private static boolean bindUnbound(ItemStack key, String id, Player actor, Player target,
@@ -116,9 +154,8 @@ public final class LockService {
 		LockCandidate selected = candidates.stream()
 				.filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null);
 		if (selected == null) {
-			actor.sendSystemMessage(Component.translatable(candidates.isEmpty()
-					? "message.no_lewd_otherworld.key_no_target"
-					: "message.no_lewd_otherworld.key_no_unbound_target"));
+			sendDetailsLink(actor, target,
+					Component.translatable("message.no_lewd_otherworld.no_unlockable_trinkets"));
 			return false;
 		}
 
