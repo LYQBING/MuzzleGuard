@@ -206,14 +206,14 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		@Override
 		public InteractionResult use(Level level, Player user, InteractionHand hand) {
 			ItemStack stack = user.getItemInHand(hand);
-			if (!level.isClientSide()) LockService.bindOrToggle(stack, user, user);
+			if (!level.isClientSide()) LockService.bindOrToggle(stack, user, user, user.isShiftKeyDown());
 			return InteractionResult.SUCCESS;
 		}
 
 		@Override
 		public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
 			if (!user.level().isClientSide() && entity instanceof Player target) {
-				LockService.bindOrToggle(user.getItemInHand(hand), user, target);
+				LockService.bindOrToggle(user.getItemInHand(hand), user, target, user.isShiftKeyDown());
 			}
 			return InteractionResult.SUCCESS;
 		}

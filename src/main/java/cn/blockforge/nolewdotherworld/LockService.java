@@ -77,42 +77,59 @@ public final class LockService {
 		return false;
 	}
 
-	public static boolean bindOrToggle(ItemStack key, Player actor, Player target) {
+	public static boolean bindOrToggle(ItemStack key, Player actor, Player target, boolean addBinding) {
 		String id = NoLewdOtherworldMod.customData(key).getString(KEY_UUID).orElse("");
-		String boundKeyId = id;
 		List<LockCandidate> candidates = findCandidates(target);
-		LockCandidate selected = boundKeyId.isEmpty() ? null : candidates.stream()
-				.filter(candidate -> candidate.boundKey.equals(boundKeyId))
-				.findFirst().orElse(null);
-		if (selected == null) {
-			selected = candidates.stream().filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null);
-		}
-		if (selected == null) {
-			if (candidates.isEmpty()) {
-				actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_no_target"));
-			} else {
-				actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_bound_elsewhere", candidates.getFirst().stack.getHoverName()));
+		List<LockCandidate> boundCandidates = candidates.stream()
+				.filter(candidate -> !candidate.boundKey.isEmpty()).toList();
+		List<LockCandidate> matchingCandidates = id.isEmpty() ? List.of() : candidates.stream()
+				.filter(candidate -> candidate.boundKey.equals(id)).toList();
+
+		if (!matchingCandidates.isEmpty()) {
+			if (addBinding) return bindUnbound(key, id, actor, target, candidates);
+			boolean lock = matchingCandidates.stream().noneMatch(candidate ->
+					candidate.data.getBoolean(LOCKED).orElse(false));
+			for (LockCandidate candidate : matchingCandidates) {
+				candidate.data.putBoolean(LOCKED, lock);
+				NoLewdOtherworldMod.setCustomData(candidate.stack, candidate.data);
+				candidate.inventory.setChanged();
 			}
+			Component result = Component.translatable(lock
+					? "message.no_lewd_otherworld.locked_group"
+					: "message.no_lewd_otherworld.unlocked_group", matchingCandidates.size());
+			actor.sendSystemMessage(result);
+			if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
+			return true;
+		}
+
+		if (addBinding) return bindUnbound(key, id, actor, target, candidates);
+		if (!boundCandidates.isEmpty()) {
+			actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_bound_elsewhere",
+					boundCandidates.getFirst().stack.getHoverName()));
+			return false;
+		}
+		return bindUnbound(key, id, actor, target, candidates);
+	}
+
+	private static boolean bindUnbound(ItemStack key, String id, Player actor, Player target,
+			List<LockCandidate> candidates) {
+		LockCandidate selected = candidates.stream()
+				.filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null);
+		if (selected == null) {
+			actor.sendSystemMessage(Component.translatable(candidates.isEmpty()
+					? "message.no_lewd_otherworld.key_no_target"
+					: "message.no_lewd_otherworld.key_no_unbound_target"));
 			return false;
 		}
 
-		boolean newlyBound = selected.boundKey.isEmpty();
-		if (newlyBound) {
-			id = id.isEmpty() ? keyId(key) : id;
-			selected.data.putString(BOUND_KEY_UUID, id);
-			selected.data.putBoolean(LOCKED, true);
-		} else {
-			selected.data.putBoolean(LOCKED, !selected.data.getBoolean(LOCKED).orElse(false));
-		}
+		String keyId = id.isEmpty() ? keyId(key) : id;
+		selected.data.putString(BOUND_KEY_UUID, keyId);
+		selected.data.putBoolean(LOCKED, true);
 		NoLewdOtherworldMod.setCustomData(selected.stack, selected.data);
 		selected.inventory.setChanged();
 
-		String message = newlyBound
-				? "message.no_lewd_otherworld.key_bound_to"
-				: isLocked(selected.stack)
-						? "message.no_lewd_otherworld.locked_item"
-						: "message.no_lewd_otherworld.unlocked_item";
-		Component result = Component.translatable(message, selected.stack.getHoverName());
+		Component result = Component.translatable("message.no_lewd_otherworld.key_bound_to",
+				selected.stack.getHoverName());
 		actor.sendSystemMessage(result);
 		if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
 		return true;
