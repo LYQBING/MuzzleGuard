@@ -3,7 +3,7 @@
 	"id": "no_lewd_otherworld",
 	"version": "${version}",
 	"name": "不许涩涩的异世界",
-	"description": "口球、项圈与锁具饰品，并提供 Needs of Nature 动画保护。",
+	"description": "${description}",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

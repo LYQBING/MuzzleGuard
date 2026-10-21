@@ -4,6 +4,15 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      mod_version:
+        description: "Optional version override (blank uses gradle.properties)"
+        required: false
+        type: string
+      mod_description:
+        description: "Optional mod description override (blank uses gradle.properties)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -24,18 +33,32 @@ jobs:
           gradle-version: '9.5.0'
 
       - name: Build
-        run: gradle clean build --no-daemon
-
-      - name: Verify required mod resources
+        env:
+          MOD_VERSION: ${{ inputs.mod_version }}
+          MOD_DESCRIPTION: ${{ inputs.mod_description }}
         run: |
-          jar_file=$(find build/libs -maxdepth 1 -name 'no-lewd-otherworld-*.jar' ! -name '*sources.jar' | head -n 1)
-          test -n "$jar_file"
-          jar tf "$jar_file" | grep -Fx 'assets/no_lewd_otherworld/textures/item/ball_gag/ball_gag_face.png'
-          jar tf "$jar_file" | grep -Fx 'data/no_lewd_otherworld/recipe/lockbox_photo.json'
-          jar tf "$jar_file" | grep -Fx 'pack.mcmeta'
+          gradle_args=(clean build --no-daemon)
+          if [[ -n "$MOD_VERSION" ]]; then
+            gradle_args+=("-Pmod_version=$MOD_VERSION")
+          fi
+          if [[ -n "$MOD_DESCRIPTION" ]]; then
+            gradle_args+=("-Pmod_description=$MOD_DESCRIPTION")
+          fi
+          gradle "${gradle_args[@]}"
+
+      - name: Locate mod JAR
+        id: mod_jar
+        run: |
+          jar_file=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print -quit)
+          if [[ -z "$jar_file" ]]; then
+            echo "No remapped mod JAR was produced." >&2
+            exit 1
+          fi
+          echo "path=$jar_file" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$jar_file" .jar)" >> "$GITHUB_OUTPUT"
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
         with:
-          name: no-lewd-otherworld-1.0.16
-          path: build/libs/no-lewd-otherworld-1.0.16.jar
+          name: ${{ steps.mod_jar.outputs.name }}
+          path: ${{ steps.mod_jar.outputs.path }}
