@@ -1,6 +1,5 @@
 package cn.blockforge.nolewdotherworld;
 
-import net.fabricmc.fabric.api.command.v2.ServerCommandEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -17,8 +16,6 @@ public final class HandcuffRestrictionService {
 	}
 
 	public static void register() {
-		ServerCommandEvents.ALLOW_COMMAND.register((source, ignored) ->
-				!(source.getEntity() instanceof Player player && isHandcuffed(player)));
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) ->
 				isHandcuffed(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) ->
