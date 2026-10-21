@@ -29,7 +29,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 import eu.pb4.trinkets.api.TrinketsApi;
 import eu.pb4.trinkets.api.TrinketInventory;
 import eu.pb4.trinkets.api.component.TrinketDataComponents;
@@ -37,9 +36,6 @@ import eu.pb4.trinkets.api.component.TrinketEquippable;
 
 public final class NoLewdOtherworldMod implements ModInitializer {
 	public static final String MOD_ID = "no_lewd_otherworld";
-	private static final String COLLAR_UUID = "muzzle_guard_collar";
-	private static final String CONTROLLER_PLAYER_UUID = "muzzle_guard_controller_player";
-	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
 	private static final List<Item> FACE_WEARABLES = new ArrayList<>();
 	private static final List<Item> NECKLACE_WEARABLES = new ArrayList<>();
 	private static final Identifier BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "ball_gag");
@@ -235,120 +231,6 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		private static void consumeIfSurvival(Player user, InteractionHand hand) {
 			if (!user.getAbilities().instabuild) user.getItemInHand(hand).shrink(1);
 		}
-	}
-
-	private static final class ShockControllerItem extends Item {
-		private ShockControllerItem(Item.Properties settings) {
-			super(settings);
-		}
-
-		@Override
-		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> textConsumer, TooltipFlag flag) {
-			super.appendHoverText(stack, context, display, textConsumer, flag);
-			CompoundTag data = customData(stack);
-			String playerId = data.getString(CONTROLLER_PLAYER_UUID).orElse("");
-			String collarId = data.getString(CONTROLLER_COLLAR_UUID).orElse("");
-			if (!playerId.isEmpty() && !collarId.isEmpty()) {
-				textConsumer.accept(Component.translatable("tooltip.no_lewd_otherworld.controller_bound", shortId(playerId), shortId(collarId)));
-			}
-		}
-
-		@Override
-		public InteractionResult use(Level level, Player user, InteractionHand hand) {
-			if (!level.isClientSide()) useController(user.getItemInHand(hand), user, user);
-			return InteractionResult.SUCCESS;
-		}
-
-		@Override
-		public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
-			if (!user.level().isClientSide() && entity instanceof Player target) {
-				useController(user.getItemInHand(hand), user, target);
-			}
-			return InteractionResult.SUCCESS;
-		}
-	}
-
-	private static void useController(ItemStack controller, Player user, Player selectedPlayer) {
-		CompoundTag controllerData = customData(controller);
-		String playerId = controllerData.getString(CONTROLLER_PLAYER_UUID).orElse("");
-		String collarId = controllerData.getString(CONTROLLER_COLLAR_UUID).orElse("");
-		if (playerId.isEmpty() || collarId.isEmpty()) {
-			ItemStack collar = getEquippedCollar(selectedPlayer);
-			if (collar == null) {
-				user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_no_collar"));
-				return;
-			}
-			if (LockService.isLockedAndLockable(collar)
-					&& !LockService.hasMatchingKey(user, LockService.boundKeyId(collar))) {
-				user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_collar_locked"));
-				return;
-			}
-			collarId = getOrCreateCollarId(collar);
-			markNecklaceInventoryUpdated(selectedPlayer);
-			controllerData.putString(CONTROLLER_PLAYER_UUID, selectedPlayer.getStringUUID());
-			controllerData.putString(CONTROLLER_COLLAR_UUID, collarId);
-			setCustomData(controller, controllerData);
-			user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_bound", selectedPlayer.getDisplayName(), shortId(collarId)));
-			return;
-		}
-
-		Player target;
-		try {
-			target = user.level().getServer().getPlayerList().getPlayer(UUID.fromString(playerId));
-		} catch (IllegalArgumentException exception) {
-			target = null;
-		}
-		if (target == null || !collarId.equals(getEquippedCollarId(target))) {
-			controllerData.remove(CONTROLLER_PLAYER_UUID);
-			controllerData.remove(CONTROLLER_COLLAR_UUID);
-			setCustomData(controller, controllerData);
-			user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_unbound"));
-			return;
-		}
-
-		target.hurtServer((ServerLevel) target.level(), user.damageSources().magic(), 1.0F);
-		user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_shocked", target.getDisplayName()));
-		if (!user.getUUID().equals(target.getUUID())) {
-			target.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_shocked_target"));
-		}
-	}
-
-	private static ItemStack getEquippedCollar(Player player) {
-		return WearableTags.findEquipped(player, "chest/necklace", WearableTags.COLLARS);
-	}
-
-	public static boolean isCollarEquipped(Player player) {
-		return getEquippedCollar(player) != null;
-	}
-
-	public static boolean canLeashPlayer(Player holder, Player target) {
-		ItemStack collar = getEquippedCollar(target);
-		if (collar == null) return false;
-		if (!LockService.isLockedAndLockable(collar)) return true;
-		if (LockService.hasMatchingKey(holder, LockService.boundKeyId(collar))) return true;
-		holder.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_collar_locked"));
-		return false;
-	}
-
-	private static String getEquippedCollarId(Player player) {
-		ItemStack collar = getEquippedCollar(player);
-		return collar == null ? "" : customData(collar).getString(COLLAR_UUID).orElse("");
-	}
-
-	private static String getOrCreateCollarId(ItemStack collar) {
-		CompoundTag data = customData(collar);
-		String id = data.getString(COLLAR_UUID).orElse("");
-		if (id.isEmpty()) {
-			id = UUID.randomUUID().toString();
-			data.putString(COLLAR_UUID, id);
-			setCustomData(collar, data);
-		}
-		return id;
-	}
-
-	private static void markNecklaceInventoryUpdated(Player player) {
-		TrinketInventory inventory = TrinketsApi.getAttachment(player).getInventory("chest/necklace");
-		if (inventory != null) inventory.setChanged();
 	}
 
 	private static boolean equipHeldItem(Player player, Player target, ItemStack held, String slot) {

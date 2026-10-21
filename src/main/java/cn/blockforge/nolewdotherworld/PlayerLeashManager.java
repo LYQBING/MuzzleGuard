@@ -88,7 +88,7 @@ public final class PlayerLeashManager {
 		}
 		if (!holdingLead) return InteractionResult.PASS;
 		if (wouldCreateCycle(holder.getUUID(), target.getUUID())) return InteractionResult.FAIL;
-		if (!NoLewdOtherworldMod.canLeashPlayer(holder, target)) return InteractionResult.FAIL;
+		if (!CollarService.canLeashPlayer(holder, target)) return InteractionResult.FAIL;
 
 		if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 		EntityType<?> allayType = BuiltInRegistries.ENTITY_TYPE.get(
@@ -124,7 +124,7 @@ public final class PlayerLeashManager {
 			if (entry.getKey().equals(serverPlayer.getUUID())) return InteractionResult.SUCCESS;
 			ServerPlayer target = serverLevel.getServer().getPlayerList().getPlayer(entry.getKey());
 			if (target == null || wouldCreateCycle(serverPlayer.getUUID(), entry.getKey())
-					|| !NoLewdOtherworldMod.canLeashPlayer(serverPlayer, target)) {
+					|| !CollarService.canLeashPlayer(serverPlayer, target)) {
 				return InteractionResult.FAIL;
 			}
 		}
@@ -154,7 +154,7 @@ public final class PlayerLeashManager {
 			ServerPlayer target = server.getPlayerList().getPlayer(entry.getKey());
 			Link link = entry.getValue();
 			if (target == null || target.isDeadOrDying()
-					|| !NoLewdOtherworldMod.isCollarEquipped(target) || link.anchor.isRemoved()) {
+					|| !CollarService.isCollarEquipped(target) || link.anchor.isRemoved()) {
 				cleanupLink(link);
 				links.remove();
 				continue;
