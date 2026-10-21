@@ -4,7 +4,7 @@ import cn.blockforge.nolewdotherworld.WearableTags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.player.PlayerModel;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +21,7 @@ public abstract class PlayerModelMixin {
 	public ModelPart leftArm;
 
 	@Inject(method = "setupAnim", at = @At("TAIL"))
-	private void noLewdOtherworld$poseHandcuffedArms(PlayerRenderState state, CallbackInfo callbackInfo) {
+	private void noLewdOtherworld$poseHandcuffedArms(AvatarRenderState state, CallbackInfo callbackInfo) {
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.level == null) return;
 		Entity entity = minecraft.level.getEntity(state.id);
