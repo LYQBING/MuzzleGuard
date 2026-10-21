@@ -11,8 +11,7 @@
 	],
 	"client": [
 		"client.CreateWorldScreenMixin",
-		"client.BlockSingleplayerScreenMixin",
-		"client.HandcuffPoseMixin"
+		"client.BlockSingleplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
