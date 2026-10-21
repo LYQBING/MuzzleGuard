@@ -32,6 +32,10 @@ public final class WearableTags {
 		return findEquipped(player, slot, tag) != null;
 	}
 
+	public static boolean isHandcuffed(Player player) {
+		return isEquipped(player, "offhand/glove", HANDCUFFS);
+	}
+
 	public static boolean isLockable(ItemStack stack) {
 		return !stack.isEmpty() && stack.is(LOCKABLES);
 	}

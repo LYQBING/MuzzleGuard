@@ -44,7 +44,7 @@ public final class HandcuffRestrictionService {
 	}
 
 	public static boolean isHandcuffed(Player player) {
-		return WearableTags.isEquipped(player, "offhand/glove", WearableTags.HANDCUFFS);
+		return WearableTags.isHandcuffed(player);
 	}
 
 	public static boolean denyIfHandcuffed(Player player) {

@@ -128,7 +128,7 @@ public final class LockService {
 		viewer.sendSystemMessage(message.copy().append(Component.translatable(
 				"message.no_lewd_otherworld.details_link").withStyle(style ->
 						style.withColor(ChatFormatting.AQUA)
-								.withClickEvent(new ClickEvent.RunCommand(command)).withUnderlined(true))));
+								.withClickEvent(new ClickEvent.RunCommand(command)).withUnderlined(false))));
 	}
 
 	private static int showDetails(Player viewer, Player target) {
