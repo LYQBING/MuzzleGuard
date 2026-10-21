@@ -18,6 +18,7 @@
 	"item.no_lewd_otherworld.locked_collar.desc": "佩戴于项链饰品槽。初始未上锁；用钥匙绑定后，可用同一把钥匙上锁或解锁。",
 	"item.no_lewd_otherworld.handcuffs": "手铐",
 	"item.no_lewd_otherworld.handcuffs.desc": "佩戴于副手手套饰品槽。佩戴期间无法使用指令、方块交互、工具或攻击。用钥匙绑定后可上锁；上锁时无法取下。",
+	"message.no_lewd_otherworld.handcuffs_restricted": "你戴着手铐，无法进行此操作。",
 	"item.no_lewd_otherworld.lockbox_photo": "信物项链",
 	"item.no_lewd_otherworld.lockbox_photo.desc": "纪念珍贵羁绊、守护彼此约定的信物项链。",
 
