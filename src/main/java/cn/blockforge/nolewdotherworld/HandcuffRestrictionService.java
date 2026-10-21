@@ -53,7 +53,7 @@ public final class HandcuffRestrictionService {
 		long now = System.currentTimeMillis();
 		Long lastMessageTime = LAST_MESSAGE_TIMES.get(player.getUUID());
 		if (lastMessageTime == null || now - lastMessageTime >= MESSAGE_INTERVAL_MS) {
-			player.displayClientMessage(Component.translatable(MESSAGE_KEY), true);
+			player.sendSystemMessage(Component.translatable(MESSAGE_KEY));
 			LAST_MESSAGE_TIMES.put(player.getUUID(), now);
 		}
 		return true;
