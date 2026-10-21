@@ -28,7 +28,7 @@
 	"item.no_lewd_otherworld.master_key.desc": "管理员工具：解除挂锁饰品与钥匙的绑定，并将饰品解锁。",
 	"item.no_lewd_otherworld.shock_controller": "电击控制器",
 	"item.no_lewd_otherworld.shock_controller.desc": "首次使用时绑定一名玩家及其当时佩戴的项圈；此后每次使用都会使其受到 1 点伤害。若该玩家离线或取下/更换项圈，下次使用时将解除绑定。",
-	"itemGroup.no_lewd_otherworld": "饰品与工具",
+	"itemGroup.no_lewd_otherworld": "不许涩涩的异世界",
 
 	"message.no_lewd_otherworld.equipped_self": "你已戴上饰品。",
 	"message.no_lewd_otherworld.equipped_other": "你已为 %s 戴上饰品。",
@@ -38,7 +38,7 @@
 	"message.no_lewd_otherworld.key_bound_to": "%s 已绑定到这把钥匙并上锁。",
 	"message.no_lewd_otherworld.locked_group": "已将 %s 件饰品全部上锁",
 	"message.no_lewd_otherworld.unlocked_group": "已将 %s 件饰品全部解锁",
-	"message.no_lewd_otherworld.no_unlockable_trinkets": "没有可解锁的饰品",
+	"message.no_lewd_otherworld.no_unlockable_trinkets": "目标没有可执行此操作的饰品",
 	"message.no_lewd_otherworld.details_link": "【详情】",
 	"message.no_lewd_otherworld.trinket_details_header": "%s 的当前饰品状态：",
 	"message.no_lewd_otherworld.trinket_detail_line": "- %s：%s",
@@ -47,7 +47,7 @@
 	"message.no_lewd_otherworld.trinket_unbound": "未绑定",
 	"message.no_lewd_otherworld.no_trinkets_worn": "目标当前无饰品佩戴。",
 	"message.no_lewd_otherworld.key_no_target": "目标当前没有可解除绑定的饰品。",
-	"message.no_lewd_otherworld.master_key_unlocked": "已将 %s 件饰品全部解锁并解除钥匙绑定。",
+	"message.no_lewd_otherworld.master_key_unlocked": "已将 %s 件饰品解除钥匙绑定。",
 
 	"message.no_lewd_otherworld.controller_no_collar": "目标未佩戴项圈。",
 	"message.no_lewd_otherworld.controller_collar_locked": "项圈处于锁定状态：请解锁或持有与其绑定的钥匙后，再进行绑定。",

@@ -13,6 +13,7 @@ import eu.pb4.trinkets.api.event.TrinketCanUnequipCallback;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -126,7 +127,8 @@ public final class LockService {
 		String command = "/muzzleguarddetails " + target.getScoreboardName();
 		viewer.sendSystemMessage(message.copy().append(Component.translatable(
 				"message.no_lewd_otherworld.details_link").withStyle(style ->
-						style.withClickEvent(new ClickEvent.RunCommand(command)).withUnderlined(true))));
+						style.withColor(ChatFormatting.AQUA)
+								.withClickEvent(new ClickEvent.RunCommand(command)).withUnderlined(true))));
 	}
 
 	private static int showDetails(Player viewer, Player target) {
@@ -138,13 +140,16 @@ public final class LockService {
 			return 1;
 		}
 		for (LockCandidate candidate : candidates) {
+			boolean locked = candidate.data.getBoolean(LOCKED).orElse(false);
 			String status = candidate.boundKey.isEmpty()
 					? "message.no_lewd_otherworld.trinket_unbound"
-					: candidate.data.getBoolean(LOCKED).orElse(false)
-							? "message.no_lewd_otherworld.trinket_locked"
+					: locked ? "message.no_lewd_otherworld.trinket_locked"
 							: "message.no_lewd_otherworld.trinket_unlocked";
+		ChatFormatting statusColor = candidate.boundKey.isEmpty()
+				? ChatFormatting.GRAY
+				: locked ? ChatFormatting.RED : ChatFormatting.GREEN;
 			viewer.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.trinket_detail_line",
-					candidate.stack.getHoverName(), Component.translatable(status)));
+					candidate.stack.getHoverName(), Component.translatable(status).withStyle(statusColor)));
 		}
 		return 1;
 	}
