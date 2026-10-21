@@ -15,9 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipContext;
-import net.minecraft.world.item.TooltipDisplay;
-import net.minecraft.world.item.TooltipFlag;
 
 public final class LockService {
 	private static final String KEY_UUID = "muzzle_guard_key";
