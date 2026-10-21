@@ -3,14 +3,11 @@ package cn.blockforge.nolewdotherworld;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -33,22 +30,17 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import eu.pb4.trinkets.api.TrinketsApi;
-import eu.pb4.trinkets.api.TrinketAttachment;
 import eu.pb4.trinkets.api.TrinketInventory;
 import eu.pb4.trinkets.api.component.TrinketDataComponents;
 import eu.pb4.trinkets.api.component.TrinketEquippable;
-import eu.pb4.trinkets.api.event.TrinketCanUnequipCallback;
-import dev.yumi.commons.TriState;
 
 public final class NoLewdOtherworldMod implements ModInitializer {
 	public static final String MOD_ID = "no_lewd_otherworld";
-	private static final String KEY_UUID = "muzzle_guard_key";
-	private static final String BOUND_KEY_UUID = "muzzle_guard_bound_key";
 	private static final String COLLAR_UUID = "muzzle_guard_collar";
 	private static final String CONTROLLER_PLAYER_UUID = "muzzle_guard_controller_player";
 	private static final String CONTROLLER_COLLAR_UUID = "muzzle_guard_controller_collar";
-	private static final String LOCKED = "muzzle_guard_locked";
-	private static final String[] MUFFLED_SYLLABLES = {"呜", "啊", "哇", "呀", "嗯", "哼", "唔", "哦", "噢", "诶", "欸", "哎", "咿", "嘤", "喵"};
+	private static final List<Item> FACE_WEARABLES = new ArrayList<>();
+	private static final List<Item> NECKLACE_WEARABLES = new ArrayList<>();
 	private static final Identifier BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "ball_gag");
 	private static final Identifier LOCKED_BALL_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "locked_ball_gag");
 	private static final Identifier BIT_GAG_ID = Identifier.fromNamespaceAndPath(MOD_ID, "bit_gag");
@@ -76,14 +68,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 					.setId(ResourceKey.create(Registries.ITEM, SHOCK_CONTROLLER_ID))
 					.stacksTo(1))
 	);
-	public static final Item BALL_GAG = Registry.register(
-			BuiltInRegistries.ITEM,
-			BALL_GAG_ID,
-			new WearableItem(new Item.Properties()
-					.setId(ResourceKey.create(Registries.ITEM, BALL_GAG_ID))
-					.component(TrinketDataComponents.EQUIPMENT, TrinketEquippable.DEFAULT.withSlots("head/face"))
-					.stacksTo(1), "head", "face")
-	);
+	public static final Item BALL_GAG = registerWearable(BALL_GAG_ID, "head", "face");
 	public static final Item LOCKED_BALL_GAG = registerWearable(LOCKED_BALL_GAG_ID, "head", "face");
 	public static final Item BIT_GAG = registerWearable(BIT_GAG_ID, "head", "face");
 	public static final Item LOCKED_BIT_GAG = registerWearable(LOCKED_BIT_GAG_ID, "head", "face");
@@ -107,7 +92,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	);
 
 	private static Item registerWearable(Identifier id, String group, String slot) {
-		return Registry.register(
+		Item item = Registry.register(
 				BuiltInRegistries.ITEM,
 				id,
 				new WearableItem(new Item.Properties()
@@ -116,6 +101,17 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 								TrinketEquippable.DEFAULT.withSlots(group + "/" + slot))
 						.stacksTo(1), group, slot)
 		);
+		if ("head".equals(group) && "face".equals(slot)) FACE_WEARABLES.add(item);
+		if ("chest".equals(group) && "necklace".equals(slot)) NECKLACE_WEARABLES.add(item);
+		return item;
+	}
+
+	public static List<Item> faceWearables() {
+		return List.copyOf(FACE_WEARABLES);
+	}
+
+	public static List<Item> necklaceWearables() {
+		return List.copyOf(NECKLACE_WEARABLES);
 	}
 
 	@Override
@@ -127,14 +123,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 				.title(Component.translatable("itemGroup.no_lewd_otherworld"))
 						.icon(() -> new ItemStack(BALL_GAG))
 						.displayItems((context, entries) -> {
-							entries.accept(BALL_GAG);
-							entries.accept(LOCKED_BALL_GAG);
-							entries.accept(BIT_GAG);
-							entries.accept(LOCKED_BIT_GAG);
-							entries.accept(RING_GAG);
-							entries.accept(LOCKED_RING_GAG);
-							entries.accept(COLLAR);
-							entries.accept(LOCKED_COLLAR);
+							faceWearables().forEach(entries::accept);
+							necklaceWearables().forEach(entries::accept);
 							entries.accept(KEY);
 							entries.accept(MASTER_KEY);
 							entries.accept(SHOCK_CONTROLLER);
@@ -142,68 +132,11 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 						})
 						.build()
 		);
-		ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
-			if (!isGagEquipped(sender)) {
-				return true;
-			}
-
-			String content = message.signedContent();
-			int[] codePoints = content.codePoints().toArray();
-			boolean onlyMuffledSpeech = true;
-			for (int codePoint : codePoints) {
-				if (Character.isLetterOrDigit(codePoint) && !isMuffledSyllable(codePoint)) {
-					onlyMuffledSpeech = false;
-					break;
-				}
-			}
-			if (onlyMuffledSpeech) return true;
-
-			StringBuilder muffledContent = new StringBuilder();
-			for (int codePoint : codePoints) {
-				if (Character.isLetterOrDigit(codePoint) && !isMuffledSyllable(codePoint)) {
-					muffledContent.append(MUFFLED_SYLLABLES[ThreadLocalRandom.current().nextInt(MUFFLED_SYLLABLES.length)]);
-				} else {
-					muffledContent.appendCodePoint(codePoint);
-				}
-			}
-			Component muffledMessage = sender.getDisplayName().copy().append(Component.literal(": ")).append(Component.literal(muffledContent.toString()));
-			sender.level().getServer().getPlayerList().broadcastSystemMessage(muffledMessage, false);
-			return false;
-		});
-		registerTrinketRules();
+		GagChatHandler.register();
+		LockService.register();
 		PlayerAccessManager.register();
 		PlayerLeashManager.register();
 		registerAnimationBlocker();
-	}
-
-	private static boolean isMuffledSyllable(int codePoint) {
-		for (String syllable : MUFFLED_SYLLABLES) {
-			if (syllable.codePointAt(0) == codePoint) return true;
-		}
-		return false;
-	}
-
-	private static boolean removeLockBinding(Player actor, Player target) {
-		TrinketAttachment attachment = TrinketsApi.getAttachment(target);
-		for (String slot : new String[]{"head/face", "chest/necklace"}) {
-			TrinketInventory inventory = attachment.getInventory(slot);
-			if (inventory == null) continue;
-			for (int index = 0; index < inventory.getContainerSize(); index++) {
-				ItemStack worn = inventory.getItem(index);
-				if (worn.isEmpty() || !(worn.is(LOCKED_COLLAR) || worn.is(LOCKED_BALL_GAG) || worn.is(LOCKED_BIT_GAG) || worn.is(LOCKED_RING_GAG))) continue;
-				CompoundTag data = customData(worn);
-				data.remove(BOUND_KEY_UUID);
-				data.remove(LOCKED);
-				setCustomData(worn, data);
-				inventory.setChanged();
-				Component result = Component.translatable("message.no_lewd_otherworld.master_key_unlocked");
-				actor.sendSystemMessage(result);
-				if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
-				return true;
-			}
-		}
-		actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_no_target"));
-		return false;
 	}
 
 	private static final class WearableItem extends Item {
@@ -217,18 +150,7 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		@Override
 		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, java.util.function.Consumer<Component> textConsumer, TooltipFlag flag) {
 			super.appendHoverText(stack, context, display, textConsumer, flag);
-			if (this != LOCKED_BALL_GAG && this != LOCKED_BIT_GAG && this != LOCKED_RING_GAG && this != LOCKED_COLLAR) return;
-
-			CompoundTag data = customData(stack);
-			String boundKey = data.getString(BOUND_KEY_UUID).orElse("");
-			textConsumer.accept(Component.translatable(boundKey.isEmpty()
-					? "tooltip.no_lewd_otherworld.unbound"
-					: "tooltip.no_lewd_otherworld.bound_key", shortId(boundKey)));
-			if (!boundKey.isEmpty()) {
-				textConsumer.accept(Component.translatable(data.getBoolean(LOCKED).orElse(false)
-						? "tooltip.no_lewd_otherworld.locked"
-						: "tooltip.no_lewd_otherworld.unlocked"));
-			}
+			LockService.appendWearableTooltip(stack, textConsumer);
 		}
 
 		@Override
@@ -270,21 +192,20 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		@Override
 		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> textConsumer, TooltipFlag flag) {
 			super.appendHoverText(stack, context, display, textConsumer, flag);
-			String id = customData(stack).getString(KEY_UUID).orElse("");
-			if (!id.isEmpty()) textConsumer.accept(Component.translatable("tooltip.no_lewd_otherworld.key_id", shortId(id)));
+			LockService.appendKeyTooltip(stack, textConsumer);
 		}
 
 		@Override
 		public InteractionResult use(Level level, Player user, InteractionHand hand) {
 			ItemStack stack = user.getItemInHand(hand);
-			if (!level.isClientSide()) bindOrToggle(stack, user, user);
+			if (!level.isClientSide()) LockService.bindOrToggle(stack, user, user);
 			return InteractionResult.SUCCESS;
 		}
 
 		@Override
 		public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
 			if (!user.level().isClientSide() && entity instanceof Player target) {
-				bindOrToggle(user.getItemInHand(hand), user, target);
+				LockService.bindOrToggle(user.getItemInHand(hand), user, target);
 			}
 			return InteractionResult.SUCCESS;
 		}
@@ -297,14 +218,14 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 
 		@Override
 		public InteractionResult use(Level level, Player user, InteractionHand hand) {
-			if (!level.isClientSide() && removeLockBinding(user, user)) consumeIfSurvival(user, hand);
+			if (!level.isClientSide() && LockService.removeBinding(user, user)) consumeIfSurvival(user, hand);
 			return InteractionResult.SUCCESS;
 		}
 
 		@Override
 		public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
 			if (!user.level().isClientSide() && entity instanceof Player target
-					&& removeLockBinding(user, target)) {
+					&& LockService.removeBinding(user, target)) {
 				consumeIfSurvival(user, hand);
 			}
 			return InteractionResult.SUCCESS;
@@ -356,8 +277,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 				user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_no_collar"));
 				return;
 			}
-			if (collar.is(LOCKED_COLLAR) && customData(collar).getBoolean(LOCKED).orElse(false)
-					&& !hasMatchingKey(user, customData(collar).getString(BOUND_KEY_UUID).orElse(""))) {
+			if (LockService.isLockedAndLockable(collar)
+					&& !LockService.hasMatchingKey(user, LockService.boundKeyId(collar))) {
 				user.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_collar_locked"));
 				return;
 			}
@@ -391,28 +312,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		}
 	}
 
-	private static boolean hasMatchingKey(Player player, String boundKeyId) {
-		if (boundKeyId.isEmpty()) return false;
-		for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
-			ItemStack stack = player.getInventory().getItem(slot);
-			if (stack.is(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
-		}
-		for (InteractionHand hand : InteractionHand.values()) {
-			ItemStack stack = player.getItemInHand(hand);
-			if (stack.is(KEY) && boundKeyId.equals(customData(stack).getString(KEY_UUID).orElse(""))) return true;
-		}
-		return false;
-	}
-
 	private static ItemStack getEquippedCollar(Player player) {
-		TrinketAttachment attachment = TrinketsApi.getAttachment(player);
-		TrinketInventory inventory = attachment.getInventory("chest/necklace");
-		if (inventory == null) return null;
-		for (int index = 0; index < inventory.getContainerSize(); index++) {
-			ItemStack stack = inventory.getItem(index);
-			if (stack.is(COLLAR) || stack.is(LOCKED_COLLAR)) return stack;
-		}
-		return null;
+		return WearableTags.findEquipped(player, "chest/necklace", WearableTags.COLLARS);
 	}
 
 	public static boolean isCollarEquipped(Player player) {
@@ -422,8 +323,8 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 	public static boolean canLeashPlayer(Player holder, Player target) {
 		ItemStack collar = getEquippedCollar(target);
 		if (collar == null) return false;
-		if (!collar.is(LOCKED_COLLAR) || !customData(collar).getBoolean(LOCKED).orElse(false)) return true;
-		if (hasMatchingKey(holder, customData(collar).getString(BOUND_KEY_UUID).orElse(""))) return true;
+		if (!LockService.isLockedAndLockable(collar)) return true;
+		if (LockService.hasMatchingKey(holder, LockService.boundKeyId(collar))) return true;
 		holder.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.controller_collar_locked"));
 		return false;
 	}
@@ -449,16 +350,6 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		if (inventory != null) inventory.setChanged();
 	}
 
-	private static boolean isGagEquipped(Player player) {
-		return isEquipped(player, BALL_GAG) || isEquipped(player, LOCKED_BALL_GAG)
-				|| isEquipped(player, BIT_GAG) || isEquipped(player, LOCKED_BIT_GAG)
-				|| isEquipped(player, RING_GAG) || isEquipped(player, LOCKED_RING_GAG);
-	}
-
-	private static boolean isEquipped(Player player, Item item) {
-		return TrinketsApi.getAttachment(player).isEquipped(item);
-	}
-
 	private static boolean equipHeldItem(Player player, Player target, ItemStack held, String slot) {
 		if (held.isEmpty()) return false;
 		TrinketInventory inventory = TrinketsApi.getAttachment(target).getInventory(slot);
@@ -472,107 +363,17 @@ public final class NoLewdOtherworldMod implements ModInitializer {
 		return true;
 	}
 
-	private static TrinketInventory getTrinketInventory(Player player, String slot) {
-		return TrinketsApi.getAttachment(player).getInventory(slot);
-	}
-
-	private static boolean bindOrToggle(ItemStack key, Player actor, Player target) {
-		String id = customData(key).getString(KEY_UUID).orElse("");
-		String boundKeyId = id;
-		List<LockCandidate> candidates = new ArrayList<>();
-		for (String slot : new String[]{"head/face", "chest/necklace"}) {
-			TrinketInventory inventory = getTrinketInventory(target, slot);
-			if (inventory == null) continue;
-			for (int index = 0; index < inventory.getContainerSize(); index++) {
-				ItemStack worn = inventory.getItem(index);
-				if (isLockableTrinket(worn)) candidates.add(new LockCandidate(worn, inventory));
-			}
-		}
-		LockCandidate selected = boundKeyId.isEmpty() ? null : candidates.stream()
-				.filter(candidate -> candidate.boundKey.equals(boundKeyId))
-				.findFirst().orElse(null);
-		if (selected == null) {
-			selected = candidates.stream().filter(candidate -> candidate.boundKey.isEmpty()).findFirst().orElse(null);
-		}
-		if (selected == null) {
-			if (candidates.isEmpty()) {
-				actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_no_target"));
-			} else {
-				actor.sendSystemMessage(Component.translatable("message.no_lewd_otherworld.key_bound_elsewhere", candidates.get(0).stack.getHoverName()));
-			}
-			return false;
-		}
-		boolean newlyBound = selected.boundKey.isEmpty();
-		if (newlyBound) {
-			id = id.isEmpty() ? keyId(key) : id;
-			selected.data.putString(BOUND_KEY_UUID, id);
-			selected.data.putBoolean(LOCKED, true);
-		} else {
-			selected.data.putBoolean(LOCKED, !selected.data.getBoolean(LOCKED).orElse(false));
-		}
-		setCustomData(selected.stack, selected.data);
-		selected.inventory.setChanged();
-		String message = newlyBound
-				? "message.no_lewd_otherworld.key_bound_to"
-				: selected.data.getBoolean(LOCKED).orElse(false)
-						? "message.no_lewd_otherworld.locked_item"
-						: "message.no_lewd_otherworld.unlocked_item";
-		Component result = Component.translatable(message, selected.stack.getHoverName());
-		actor.sendSystemMessage(result);
-		if (!actor.getUUID().equals(target.getUUID())) target.sendSystemMessage(result);
-		return true;
-	}
-
-	private static boolean isLockableTrinket(ItemStack stack) {
-		return !stack.isEmpty() && (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_BIT_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR));
-	}
-
-	private static final class LockCandidate {
-		private final ItemStack stack;
-		private final TrinketInventory inventory;
-		private final CompoundTag data;
-		private final String boundKey;
-
-		private LockCandidate(ItemStack stack, TrinketInventory inventory) {
-			this.stack = stack;
-			this.inventory = inventory;
-			this.data = customData(stack);
-			this.boundKey = data.getString(BOUND_KEY_UUID).orElse("");
-		}
-	}
-
-	private static String keyId(ItemStack key) {
-		CompoundTag data = customData(key);
-		String id = data.getString(KEY_UUID).orElse("");
-		if (id.isEmpty()) {
-			id = UUID.randomUUID().toString();
-			data.putString(KEY_UUID, id);
-			setCustomData(key, data);
-		}
-		return id;
-	}
-
-	private static String shortId(String id) {
+	static String shortId(String id) {
 		return id.length() <= 8 ? id : id.substring(0, 8);
 	}
 
-	private static CompoundTag customData(ItemStack stack) {
+	static CompoundTag customData(ItemStack stack) {
 		CustomData component = stack.get(DataComponents.CUSTOM_DATA);
 		return component == null ? new CompoundTag() : component.copyTag();
 	}
 
-	private static void setCustomData(ItemStack stack, CompoundTag data) {
+	static void setCustomData(ItemStack stack, CompoundTag data) {
 		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
-	}
-
-	private static void registerTrinketRules() {
-		// Register rule to prevent unequipping when locked
-		TrinketCanUnequipCallback.EVENT.register((stack, slot, entity, canUnequipDefault) -> {
-			if (stack.is(LOCKED_BALL_GAG) || stack.is(LOCKED_BIT_GAG) || stack.is(LOCKED_RING_GAG) || stack.is(LOCKED_COLLAR)) {
-				return customData(stack).getBoolean(LOCKED).orElse(false) ? TriState.FALSE : TriState.DEFAULT;
-			}
-			return TriState.DEFAULT;
-		});
 	}
 
 	private static boolean isProtectedByKeepsake(Player player) {

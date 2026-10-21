@@ -16,14 +16,10 @@ import org.joml.Matrix4f;
 public final class NoLewdOtherworldClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.BALL_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_BALL_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.BIT_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_BIT_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.RING_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_RING_GAG, renderer(true));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.COLLAR, renderer(false));
-		TrinketRendererRegistry.registerRenderer(NoLewdOtherworldMod.LOCKED_COLLAR, renderer(false));
+		NoLewdOtherworldMod.faceWearables().forEach(item ->
+				TrinketRendererRegistry.registerRenderer(item, renderer(true)));
+		NoLewdOtherworldMod.necklaceWearables().forEach(item ->
+				TrinketRendererRegistry.registerRenderer(item, renderer(false)));
 	}
 
 	private static TrinketRenderer renderer(boolean face) {
