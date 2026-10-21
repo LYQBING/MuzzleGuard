@@ -7,6 +7,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.network.chat.Component;
 import net.fabricmc.api.ClientModInitializer;
 import eu.pb4.trinkets.api.client.TrinketRenderer;
 import eu.pb4.trinkets.api.client.TrinketRendererRegistry;
@@ -16,6 +17,9 @@ import org.joml.Matrix4f;
 public final class NoLewdOtherworldClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		HandcuffRestrictionService.setClientFeedback(player ->
+				Minecraft.getInstance().gui.setOverlayMessage(
+						Component.translatable("message.no_lewd_otherworld.handcuffs_restricted"), false));
 		NoLewdOtherworldMod.faceWearables().forEach(item ->
 				TrinketRendererRegistry.registerRenderer(item, renderer(true)));
 		NoLewdOtherworldMod.necklaceWearables().forEach(item ->
