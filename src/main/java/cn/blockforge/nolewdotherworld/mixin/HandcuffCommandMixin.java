@@ -1,6 +1,7 @@
 package cn.blockforge.nolewdotherworld.mixin;
 
 import cn.blockforge.nolewdotherworld.HandcuffRestrictionService;
+import cn.blockforge.nolewdotherworld.HandcuffWhitelist;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +14,7 @@ public abstract class HandcuffCommandMixin {
 	@Inject(method = "handleChatCommand", at = @At("HEAD"), cancellable = true)
 	private void noLewdOtherworld$blockCommandsWhileHandcuffed(ServerboundChatCommandPacket packet, CallbackInfo callbackInfo) {
 		ServerGamePacketListenerImpl listener = (ServerGamePacketListenerImpl) (Object) this;
-		if (packet.command().startsWith("muzzleguarddetails ")) return;
+		if (HandcuffWhitelist.isCommandAllowed(packet.command())) return;
 		if (HandcuffRestrictionService.denyIfHandcuffed(listener.player)) callbackInfo.cancel();
 	}
 }
